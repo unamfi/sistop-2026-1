@@ -1,4 +1,4 @@
-# sistop-20xx-x • Sistemas Operativos #
+# sistop-2026-1 • Sistemas Operativos #
 
 ¡Bienvenido!
 
