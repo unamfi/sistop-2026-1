@@ -1,0 +1,5 @@
+Práctica 1: Uso de Git y de GitHub
+Práctica creada: 2025.08.12
+Entrega: 2025.08.19
+
+Soy Abraham Tejeda, y mi nombre de usuario en GitHub es «Abraham-Tejeda-Vaca».
