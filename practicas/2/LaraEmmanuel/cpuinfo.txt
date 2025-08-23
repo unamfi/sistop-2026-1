@@ -1,0 +1,69 @@
+
+Nombre de host:                            DESKTOP-C0AIJN7
+Nombre del sistema operativo:              Microsoft Windows 11 Pro
+Versi¢n del sistema operativo:             10.0.26100 N/D Compilaci¢n 26100
+Fabricante del sistema operativo:          Microsoft Corporation
+Configuraci¢n del sistema operativo:       Estaci¢n de trabajo independiente
+Tipo de compilaci¢n del sistema operativo: Multiprocessor Free
+Propietario registrado:                    User
+Organizaci¢n registrada:                   
+Id. del producto:                          00331-10000-00001-AA139
+Fecha de instalaci¢n original:             30/12/2024, 06:58:55 p. m.
+Tiempo de arranque del sistema:            20/08/2025, 08:01:48 p. m.
+Fabricante del sistema:                    Micro-Star International Co., Ltd.
+Modelo del sistema:                        MS-7D98
+Tipo de sistema:                           x64-based PC
+Procesadores:                              1 Procesadores instalados.
+                                           [01]: Intel64 Family 6 Model 151 Stepping 2 GenuineIntel ~3200 Mhz
+Versi¢n del BIOS:                          American Megatrends International, LLC. H.70, 27/03/2024
+Directorio de Windows:                     C:\WINDOWS
+Directorio de sistema:                     C:\WINDOWS\system32
+Dispositivo de arranque:                   \Device\HarddiskVolume1
+Configuraci¢n regional del sistema:        es-mx;Espa¤ol (M‚xico)
+Idioma de entrada:                         es-mx;Espa¤ol (M‚xico)
+Zona horaria:                              (UTC-06:00) Guadalajara, Ciudad de M‚xico, Monterrey
+Memoria f¡sica total:                      65,375 MB
+Memoria f¡sica disponible:                 52,167 MB
+Memoria virtual: tama¤o m ximo:            69,471 MB
+Memoria virtual: disponible:               54,171 MB
+Memoria virtual: en uso:                   15,300 MB
+Ubicaciones de archivos de p gina:         C:\pagefile.sys
+Dominio:                                   WORKGROUP
+Servidor de inicio de sesi¢n:              \\DESKTOP-C0AIJN7
+Revisiones:                                3 revisi¢n(es) instaladas.
+                                           [01]: KB5056579
+                                           [02]: KB5063878
+                                           [03]: KB5065381
+Tarjetas de red:                           2 Tarjetas de interfaz de red instaladas.
+                                           [01]: Intel(R) Wi-Fi 6E AX211 160MHz
+                                                 Nombre de conexi¢n: Wi-Fi
+                                                 Estado:             Medios desconectados
+                                           [02]: Realtek Gaming 2.5GbE Family Controller
+                                                 Nombre de conexi¢n: Ethernet
+                                                 DHCP habilitado:    S¡
+                                                 Servidor DHCP:      192.168.1.254
+                                                 Direcciones IP
+                                                 [01]: 192.168.1.64
+                                                 [02]: fe80::9043:50a2:6c94:1dc6
+                                                 [03]: 2806:106e:28:1b68:c5dc:e65e:97f8:8ca6
+                                                 [04]: 2806:106e:28:1b68:d824:67f8:fdc:f15f
+                                                 [05]: 2806:106e:28:1b68::2
+Seguridad basada en virtualizaci¢n:        Estado:ÿEn ejecuci¢n
+                                           Propiedades de seguridad requeridas:
+                                           Propiedades de seguridad disponibles:
+                                                 Compatibilidad con la virtualizaci¢n base
+                                                 Arranque seguro
+                                                 Protecci¢n de DMA
+                                                 Sobrescritura de memoria segura
+                                                 C¢digo UEFI de solo lectura
+                                                 SMM Security Mitigations 1.0
+                                                 Control de ejecuci¢n basado en el modo
+                                                 Virtualizaci¢n de APIC
+                                           Services Configured:
+                                                 Integridad del c¢digo reforzada por el hipervisor
+                                           Services Running:
+                                                 Integridad del c¢digo reforzada por el hipervisor
+                                           App Control for Business policy: Forzado
+                                           App Control for Business user mode policy: Desactivado
+                                           Caracter¡sticas de seguridad habilitadas:
+Requisitos Hyper-V:                        Se detect¢ un hipervisor. No se mostrar n las caracter¡sticas necesarias para Hyper-V.
