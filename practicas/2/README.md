@@ -1,7 +1,7 @@
 # Práctica 2: Ramas paralelas de desarrollo
 
-    Práctica creada: 2024.08.13
-    Entrega en tiempo: 2024.08.20
+    Práctica creada: 2025.08.21
+    Entrega en tiempo: 2024.08.26
 
 Posiblemente, varios de ustedes se han confundido (o lo harán) al
 enviar un un *pull request*, incluyendo cambios de más o de menos
