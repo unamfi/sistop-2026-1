@@ -1,0 +1,2 @@
+2025-08-25 18:30 America/Mexico_City
+Generado manualmente para la práctica 2A (equivale a `date`).
