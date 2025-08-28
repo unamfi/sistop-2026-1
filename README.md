@@ -82,7 +82,7 @@ por lo cual el peligro de censura no es mera fantasía.
 4. Para todas las entregas, usa el esquema de nombre estandarizado que
    presentamos en la
    [sección 4 de la práctica 1](https://github.com/unamfi/sistop-2026-1/tree/main/practicas/1/README.md):
-   
+
        [tipo_entrega]/[numero]/[ApellidoNombre]/
 
     * Esto es, por ejemplo, si voy a entregar la primera práctica,
