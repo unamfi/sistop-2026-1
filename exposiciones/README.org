@@ -11,11 +11,14 @@
   como lo refleja la rúbrica, obtiene una calificación un poco más alta)
   el que ustedes me planteen los temas de su interés.
 
-  |------------+---------------------------------------------+--------------------------------------+-------+------------+-----------+------------|
-  |      Fecha | Tema                                        | Integrantes                          | Video | Documentos | Preguntas | Evaluación |
-  |------------+---------------------------------------------+--------------------------------------+-------+------------+-----------+------------|
-  | 2025.09.04 | La /partición de swap/ y la memoria virtual | Luis Angel Echevarría y  Angel Tapia |       |            |           |            |
-  |------------+---------------------------------------------+--------------------------------------+-------+------------+-----------+------------|
+  |------------+--------------------------------------------------------+--------------------------------------+-------+------------+-----------+------------|
+  |      Fecha | Tema                                                   | Integrantes                          | Video | Documentos | Preguntas | Evaluación |
+  |------------+--------------------------------------------------------+--------------------------------------+-------+------------+-----------+------------|
+  | 2025.09.04 | La /partición de swap/ y la memoria virtual            | Luis Angel Echevarría y  Angel Tapia |       |            |           |            |
+  | 2025.09.09 | Cifrado de datos en los sistemas operativos            | Michelle Paola González              |       |            |           |            |
+  | 2025.09.17 | Cómo los contenedores han redefinido la virtualización | José Eduardo Martínez                |       |            |           |            |
+  | 2025.09.17 | Orquestadores de contenedores                          | Emilio García y María Lucía Rivas    |       |            |           |            |
+  |------------+--------------------------------------------------------+--------------------------------------+-------+------------+-----------+------------|
   #+TBLFM: 
 
 * Rúbrica de evaluación
