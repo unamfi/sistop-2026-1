@@ -1,7 +1,7 @@
 # Revisión de MiComputer
 
-	Planteamiento: 20xx.xx.xx
-    Entrega: 20xx.xx.xx
+	Planteamiento: 2025.09.04
+    Entrega: 2025.09.18
 
 Corría la década de 1980, y niños y jóvenes nos entusiasmábamos con
 aprender computación. Las computadoras eran simples, y con un poco de
@@ -55,7 +55,7 @@ Esto es:
 - Si los últimos dos números de la suma son 00, 01, 02 o 03 elige un
   fascículo al azar.
 
-Por favor, ¡indiquen en su entrega el número de matrícula de ambos!
+Por favor, ¡indiquen _en su entrega_ el número de matrícula de ambos!
 
 ## ¿Qué leer?
 
@@ -69,10 +69,9 @@ tu atención, enfocándote en los temas que vimos hasta ahora en clase.
 
 ## ¿Qué hacer?
 
-Les pido que desarrollen una reseña de lo que leyeron, prestando
-especial atención a los temas que abordamos en clase, y apuntando qué
-aspectos de ambos artículos les resultaron más interesantes o
-notorios.
+Les pido que desarrollen una reseña de lo que leyeron, prestando especial
+atención a los temas que abordamos en clase, **indicando expresamente**
+aspectos de ambos artículos les resultaron más relevantes a lo visto.
 
 Te pido que la reseña sea *corta* (unas 2-3 páginas en total; no
 repitas lo que leíste, resume lo que llamó tu atención.
@@ -82,6 +81,6 @@ repitas lo que leíste, resume lo que llamó tu atención.
 Este cuenta como el *primer proyecto* de la materia. Esto es, como si
 fuera un examen parcial.
 
-<!-- ## Calificaciones y comentarios -->
+## Calificaciones y comentarios
 
-<!-- Conforme vaya calificando, [los iré publicando aquí](./calificaciones.org). -->
+Conforme vaya calificando, [los iré publicando aquí](./calificaciones.org).
