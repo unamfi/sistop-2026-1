@@ -11,16 +11,16 @@
   como lo refleja la rúbrica, obtiene una calificación un poco más alta)
   el que ustedes me planteen los temas de su interés.
 
-  |------------+--------------------------------------------------------+---------------------------------------+-------+------------+------------|
-  |      Fecha | Tema                                                   | Integrantes                           | Video | Documentos | Evaluación |
-  |------------+--------------------------------------------------------+---------------------------------------+-------+------------+------------|
-  | 2025.09.09 | La /partición de swap/ y la memoria virtual            | Luis Angel Echevarría y  Angel Tapia  |       |            |            |
-  | 2025.09.09 | Cifrado de datos en los sistemas operativos            | Michelle Paola González               |       |            |            |
-  | 2025.09.17 | Cómo los contenedores han redefinido la virtualización | José Eduardo Martínez                 |       |            |            |
-  | 2025.09.17 | Orquestadores de contenedores                          | Emilio García y María Lucía Rivas     |       |            |            |
-  | 2025.09.23 | Sistemas operativos embebidos                          | Diego Alejandro Luna y Diego Coronado |       |            |            |
-  | 2025.09.23 | Alonso Ávila y Samuel Medina                           |                                       |       |            |            |
-  |------------+--------------------------------------------------------+---------------------------------------+-------+------------+------------|
+  |------------+--------------------------------------------------------+---------------------------------------+-------+-------------------------+------------------------------|
+  |      Fecha | Tema                                                   | Integrantes                           | Video | Documentos              | Evaluación                   |
+  |------------+--------------------------------------------------------+---------------------------------------+-------+-------------------------+------------------------------|
+  | 2025.09.09 | Memoria virtual, archivos de paginación y área swap    | Luis Angel Echevarría y  Angel Tapia  | [[https://youtu.be/HFGPJ_Gh7Hc][Abrir]] | [[./EchevarriaLuis-TapiaAngel/escrito_particionSwap_memoriaVirtual_SO.pdf][Documento]], [[./EchevarriaLuis-TapiaAngel/presentacion_particionSwap_memoriaVirtual_SO.pdf][presentación]] | [[https://encuestas.iiec.unam.mx/791123?lang=es-MX][Evaluación de los compañeros]] |
+  | 2025.09.09 | Cifrado de datos en los sistemas operativos            | Michelle Paola González y Bruno Maya  | [[https://youtu.be/LmQ1EIiCvqs][Abrir]] | [[./GonzalezMichelle-MayaBruno/cifradoDeDatos_SO.pdf][Documento]], [[./GonzalezMichelle-MayaBruno/presentacionCifradoDeDatos_SO.pdf][presentación]] | [[https://encuestas.iiec.unam.mx/387643?lang=es-MX][Evaluación de los compañeros]]                             |
+  | 2025.09.17 | Cómo los contenedores han redefinido la virtualización | José Eduardo Martínez                 |       |                         |                              |
+  | 2025.09.17 | Orquestadores de contenedores                          | Emilio García y María Lucía Rivas     |       |                         |                              |
+  | 2025.09.23 | Sistemas operativos embebidos                          | Diego Alejandro Luna y Diego Coronado |       |                         |                              |
+  | 2025.09.23 | Alonso Ávila y Samuel Medina                           |                                       |       |                         |                              |
+  |------------+--------------------------------------------------------+---------------------------------------+-------+-------------------------+------------------------------|
   #+TBLFM: 
 
 * Rúbrica de evaluación
