@@ -1,7 +1,7 @@
 # Práctica 4: Ignorando archivos *innecesarios*
 
-    Práctica creada el 20xx.xx.xx
-	Entrega: 20xx.xx.xx
+    Práctica creada el 2025.09.11
+	Entrega: 2025.09.18
 
 Los sistemas de control de cambios están hechos para poder dar
 seguimiento a la historia de los archivos que forman parte de nuestro
@@ -152,8 +152,8 @@ Un par de notas relacionadas con el manejo de `.gitignore`:
   usuario* los sistemas operativos de Apple.
 
   **¡Ojo con la nomenclatura de directorios!** No me vayan a dejar un
-  `.gitignore` fuera de su directorio personal *para esta práctica*, porque no
-  los voy a aceptar :-Þ
+  `.gitignore` fuera de su directorio personal, porque no los voy a aceptar
+  :-Þ
 
 - *Lo que ya existe no se ignora*. Si habías ya agregado al
   repositorio tu archivo `*.class`, `a.out`, `*.pyc` o similar, Git no
