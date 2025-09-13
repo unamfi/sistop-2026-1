@@ -3,7 +3,7 @@
 #include <unistd.h>
 
 int main(void) {
-    pid_t pid = fork();
+    pid_t pid =fork();
     if (pid < 0) { perror("fork"); exit(1); }
 
     if (pid == 0) {
