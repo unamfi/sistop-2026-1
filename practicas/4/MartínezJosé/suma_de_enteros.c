@@ -5,6 +5,6 @@ void main() {
   int b = 4;
   int c = 0;
   for (int i = 1; i < b; i++)
-    c = c + a:
-  printf("mi resultado es: %d", c);
+    c = c + a;
+  printf("mi resultado es: %d\n", c);
 }
