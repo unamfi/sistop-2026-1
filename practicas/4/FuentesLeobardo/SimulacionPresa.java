@@ -99,10 +99,10 @@ public class SimulacionPresa {
             while (true) {
                 if (presa.estanCompuertasAbiertas()) {
                     double flujo = 12 + Math.random() * 5; // Flujo del desagüe entre 12 y 17
-                    //System.out.println("Flujo del desagüe: " + String.format("%.2f", flujo));
+                    System.out.println("Flujo del desagüe: " + String.format("%.2f", flujo));
                     presa.ajustarNivel(-flujo);
                 } else {
-                    //System.out.println("Compuertas cerradas: No hay flujo de desagüe.");
+                    System.out.println("Compuertas cerradas: No hay flujo de desagüe.");
                 }
 
                 try {
