@@ -2,10 +2,10 @@
 #include <unistd.h>
 
 int main() {
-    int pid = fork();  // Crea un proceso hijo
+i    int pid = fork();
 
     if (pid == 0) {
-        printf("Tu mataste a mi padre\n");
+        printf("Mataste a mi padre\n");
     } else {
         printf("YO SOY TU PADREEE\n");
     }
