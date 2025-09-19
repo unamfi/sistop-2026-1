@@ -1,0 +1,111 @@
+#+title: Evaluación de la exposición
+#+author: Gunnar Wolf
+
+* Cifrado de datos en los sistemas operativos
+
+- Tema presentado por :: Michelle Paola González y Bruno Maya
+- Calificación global :: 8.91
+
+|------------------------+------+--------------------+------+---------|
+| Evaluación  compañeros | Peso | Evaluación docente | Peso | *Total* |
+|------------------------+------+--------------------+------+---------|
+|                    8.7 |  0.3 |                  9 |  0.7 |    8.91 |
+|------------------------+------+--------------------+------+---------|
+#+TBLFM: @2$5=$1*$2+$3*$4;f-2
+
+* Evaluación grupal
+
+|              | 1 | 2 | 3 | 4 | 5 | Total |
+|--------------+---+---+---+---+---+-------|
+| Originalidad | 0 | 1 | 0 | 2 | 5 |  8.75 |
+| Nivel        | 0 | 1 | 0 | 2 | 5 |  8.75 |
+| Relevancia   | 0 | 0 | 1 | 1 | 6 |  9.25 |
+| Claridad     | 0 | 1 | 1 | 1 | 5 |  8.50 |
+| Presencia    | 1 | 0 | 0 | 3 | 4 |  8.25 |
+|--------------+---+---+---+---+---+-------|
+|              |   |   |   |   |   |  8.70 |
+#+TBLFM: @2$7..@6$7=10 * (0.2*$2 + 0.4*$3 + 0.6*$4 + 0.8*$5 + $6 ) / vsum($2..$6); f-2::@7$7=vmean(@2$7..@6$7); f-2
+
+** Comentarios de los compañeros
+
+- Estuvo muy bueno el video, solo me quedó duda en que es el Key stretching como funciona
+para evitar la fuerza bruta
+- Ninguna.
+
+* Evaluación por parte del docente
+
+| *Aspecto*              | *Peso* | *Evaluación* | *Puntos* |
+|------------------------+--------+--------------+----------|
+| Originalidad del tema  |    0.1 |           10 |       1. |
+| Material desarrollado  |    0.2 |           10 |       2. |
+| Contenido              |    0.2 |           10 |       2. |
+| Fuentes bibliográficas |    0.1 |          7.5 |     0.75 |
+| Uso del tiempo         |    0.1 |           10 |       1. |
+| Dominio del tema       |   0.15 |          7.5 |    1.125 |
+| Presencia              |   0.15 |          7.5 |    1.125 |
+|------------------------+--------+--------------+----------|
+| *Global*               |        |              |     9.00 |
+#+TBLFM: @<<$4..@>>$4=$2*$3::$4=vsum(@<<..@>>);f-2
+
+** Comentarios
+
+- ¡Ojo! La criptografía contempla /muchas funcionalidades/ además de
+  asegurar la /confidencialidad/ de los datos: Es mediante otras funciones
+  criptográficas que podemos garantizar la /integridad/ de los datos.
+
+  Claro, ustedes hablaron (¡correctamente!) de /cifrado/, no
+  /criptografía/, pero el contexto me hace importante traer esta
+  apreciación 😉
+
+  Mencionan inmediatamente después la "Triada CIA". ¡Muy acorde! Y
+  parecería responderle a mi anotación. Sin embargo, las funciones a que
+  hago referencias son /muy/ distintas. Veo si tiene sentido comentar aquí,
+  o lo comentamos más adelante en clase.
+
+- Me pregunto por qué pusieron "EFS" para Windows, que nunca había
+  escuchado mencionar... Pero al hablar al respecto, hablan de "New
+  Technology File System" (NTFS). Ese es el nombre correcto del sistema de
+  archivos principal en Windows.
+
+- Respecto a TPM y Secure Enclave: Formalmente, SE _es_ una implementación
+  de TPM. Su funcionalidad va más allá de lo que mencionan, de asegurar las
+  claves de cifrado para los datos almacenados: ambos hacen validación
+  criptográfica basada en firmado, verificando /al vuelo/ de todo el código
+  que se ejecuta en /espacio de kernel/ (esto es, todo lo que formalmente
+  forma parte del sistema operativo, /incluyendo/ los drivers provistos por
+  terceros).
+
+- Mencionan: «El TPM valida la integridad del sistema y libera la clave
+  automáticamente si todo es correcto, garantizando que los datos
+  permanezcan seguros incluso si el dispositivo se pierde o se
+  roba». Entonces... Si me roban mi computadora, ¿cómo es que se entera el
+  TPM que algo anda mal? No queda claro qué mecanismo se emplea 😉
+
+  Cuando tengo cifrado de disco completo (¿quién de ustedes lo tiene? 😉),
+  a la hora de inicializar mi computadora, esta deberá pedirme una
+  contraseña /para poder terminar de cargar el sistema operativo/. Esta
+  contraseña no es directamente la llave de cifrado: es la contraseña que
+  permite el acceso a la /llave generada aleatoriamente/, que está
+  resguardada por el TPM.
+
+- ¿Se hace un doble cifrado con FileVault, uno por el hardware mismo, y el
+  otro con la contraseña de usuario? Me sorprendería
+  mucho. Criptográficamente, está demostrado que no brinda seguridad
+  adicional (e incluso a veces resulta, paradójicamente, /menos seguro/ que
+  un cifrado sencillo). ¡Me gustaría validar esta información!
+
+- Tengo que corregir aquí un poco: Al emplear Linux, si el administrador
+  así lo especifica, LUKS va a emplear al TPM que sea necesario (sea Secure
+  Enclave o cualquier otro TPM). LUKS /también/ permite el funcionamiento
+  en sistemas que no cuentan con un TPM. Y BitLocker, en Windows, /también/
+  permite especificar la contraseña a la hora de arranque, dependiendo de
+  cómo haya sido configurado.
+
+- Perooooo.... Llegando a las conclusiones, el cifrado en SOs *sí* sigue
+  siendo opcional. ¿Cómo puedo asegurarlo tan descaradamente? Bueno, porque
+  veo que mis colegas que dan soporte a los usuarios Windows sacan el disco
+  de una computadora y lo conectan a otra... y la información está
+  disponible. Si tuvieran configurado cifrado, esa información sólo podría
+  ser descifrada con el TPM adecuado. Y eso ha sido determinado
+  como... poco amigable al usuario final, y por tanto, se relega a
+  /necesariamente opcional/.
