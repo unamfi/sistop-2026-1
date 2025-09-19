@@ -5,7 +5,7 @@ int main() {
 i    int pid = fork();
 
     if (pid == 0) {
-        printf("Mataste a mi padre\n");
+        printf("Tu mataste a mi padre piiipipi\n");
     } else {
         printf("YO SOY TU PADREEE\n");
     }
