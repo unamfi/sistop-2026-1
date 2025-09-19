@@ -1,0 +1,4 @@
+salida.log
+*.log
+__pycache__/
+*.pyc
