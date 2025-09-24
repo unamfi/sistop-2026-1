@@ -1,0 +1,18 @@
+# Archivos a ignorar para programas en C
+*.o
+*.out
+*.exe
+
+# Archivo ejecutable que generará nuestro programa
+hilos-ejecutable
+
+# Archivos objeto específicos
+*.obj
+
+# Archivos de backup
+*~
+*.bak
+
+# Archivos de debug
+*.dSYM/
+debug/
