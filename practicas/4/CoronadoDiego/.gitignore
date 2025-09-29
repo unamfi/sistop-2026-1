@@ -1,0 +1,6 @@
+# Reportes generados automáticamente
+reporte_sistema.txt
+
+# Archivos compilados de Python
+__pycache__/
+*.pyc
