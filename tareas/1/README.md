@@ -1,7 +1,7 @@
 # Ejercicios de sincronización
 
-    Tarea creada: 20xx.xx.xx
-	Entrega: 20xx.xx.xx
+    Tarea creada: 2025.10.09
+	Entrega: 2025.10.16
 
 Vimos ya los principales patrones de sincronización empleando
 semáforos, y mencionamos también la existencia de otros (variables de
@@ -18,17 +18,17 @@ condición, señales y manejadores Unix...)
 Ahora toca el turno a ustedes: Van a resolver un problema de programación
 concurrente en el que sea necesario emplear algún mecanismo de sincronización.
 
-## Calificaciones y comentarios
+<!-- ## Calificaciones y comentarios -->
 
-Pueden [consultar aquí las calificaciones y comentarios a sus
-soluciones](./revision.org).
+<!-- Pueden [consultar aquí las calificaciones y comentarios a sus -->
+<!-- soluciones](./revision.org). -->
 
 ## Los problemas
 
-Les mostré una presentación con siete problemas de sincronización.  Si todo fue
-como lo planeé, resolvimos ya uno de los problemas en clase, con lo cual
-quedarían seis (y si no hicimos una solución en clase, pueden elegir entre los
-siete). La presentación, como todas las demás, está en [el sitio Web de la
+Les mostré una presentación con siete problemas de sincronización.  <!-- Si todo fue -->
+<!-- como lo planeé, resolvimos ya uno de los problemas en clase, con lo cual -->
+<!-- quedarían seis (y si no hicimos una solución en clase, pueden elegir entre los -->
+<!-- siete) -->. La presentación, como todas las demás, está en [el sitio Web de la
 materia](http://gwolf.sistop.org/), y lleva por título [Ejercicios de
 sincronización](http://gwolf.sistop.org/laminas/06b-ejercicios-sincronizacion.pdf).
 
