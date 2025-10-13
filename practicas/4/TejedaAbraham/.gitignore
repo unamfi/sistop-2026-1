@@ -1,0 +1,12 @@
+proceso
+proceso.exe
+*.o
+*.obj
+*.out
+*.exe
+
+*.registro
+salida.registro
+
+*.log
+*.sqlite
