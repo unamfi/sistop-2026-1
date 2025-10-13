@@ -1,0 +1,63 @@
+#+title: Evaluación de la exposición
+#+author: Gunnar Wolf
+
+* Sistemas Operativos Embebidos
+
+- Tema presentado por :: Diego Alejandro Luna y Diego Coronado
+- Calificación global :: 8.63
+
+|------------------------+------+--------------------+------+---------|
+| Evaluación  compañeros | Peso | Evaluación docente | Peso | *Total* |
+|------------------------+------+--------------------+------+---------|
+|                   9.53 |  0.3 |               8.25 |  0.7 |    8.63 |
+|------------------------+------+--------------------+------+---------|
+#+TBLFM: @2$5=$1*$2+$3*$4;f-2
+
+* Evaluación grupal
+
+|              | 1 | 2 | 3 | 4 |  5 | Total |
+|--------------+---+---+---+---+----+-------|
+| Originalidad | 0 | 0 | 0 | 2 | 10 |  9.67 |
+| Nivel        | 0 | 0 | 0 | 3 |  9 |  9.50 |
+| Relevancia   | 0 | 0 | 1 | 1 | 10 |  9.50 |
+| Claridad     | 0 | 0 | 1 | 1 | 10 |  9.50 |
+| Presencia    | 0 | 0 | 0 | 3 |  9 |  9.50 |
+|--------------+---+---+---+---+----+-------|
+|              |   |   |   |   |    |  9.53 |
+#+TBLFM: @2$7..@6$7=10 * (0.2*$2 + 0.4*$3 + 0.6*$4 + 0.8*$5 + $6 ) / vsum($2..$6); f-2::@7$7=vmean(@2$7..@6$7); f-2
+
+** Comentarios de los compañeros
+- Muy buena exposición, muy buen tema e interesante
+- Muy buena exposición, demasiado claro.
+- Excelente presentación
+- Muy buena exposición de los compañeros 10/10
+
+* Evaluación por parte del docente
+
+| *Aspecto*              | *Peso* | *Evaluación* | *Puntos* |
+|------------------------+--------+--------------+----------|
+| Originalidad del tema  |    0.1 |           10 |       1. |
+| Material desarrollado  |    0.2 |           10 |       2. |
+| Contenido              |    0.2 |          7.5 |      1.5 |
+| Fuentes bibliográficas |    0.1 |            5 |      0.5 |
+| Uso del tiempo         |    0.1 |           10 |       1. |
+| Dominio del tema       |   0.15 |          7.5 |    1.125 |
+| Presencia              |   0.15 |          7.5 |    1.125 |
+|------------------------+--------+--------------+----------|
+| *Global*               |        |              |     8.25 |
+#+TBLFM: @<<$4..@>>$4=$2*$3::$4=vsum(@<<..@>>);f-2
+
+** Comentarios
+- Supongo que es cuestión de preferencias... Me hizo algo de /ruido/ el que
+  avanzaran con la historia y el /dónde encontramos/ sin haber presentado
+  /qué son/ los sistemas embebidos. Pero lo revisan inmediatamente a
+  continuación 🙂
+- La forma en que se “pasan la palabra” es un buen detalle para ir
+  /hilando/ la presentación.
+- El tono de la presentación muestra claramente que van leyendo. Si bien es
+  bueno preparar y seguir un guión, es conveniente que sean /puntos a
+  cubrir/, para tenerlo como guía, y presentar con un ritmo más natural 
+- Cuando presentaban los diagramas
+  sensor-procesador-actuador-retroalimentación, me parecía que entrarían
+  con información más técnica, pero... la presentación se mantuvo en el
+  terreno de lo descriptivo, sin entrar en detalles técnicos 🙁
