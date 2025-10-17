@@ -1,0 +1,20 @@
+Hernández Irineo; Jorge Manuel
+Zamora Ayala; Antonio Manuel
+
+Problema a resolver: 
+De gatos y ratones. Este probelma plantea lo siguiente: 
+- Tenemos 'k' gatos, 'l' ratones y 'm' platos, y tanto gatos como ratones pueden comer de los 'm' platos, siempre y cuando un sólo animal coma de un sólo plato a la vez.
+- Si un gato está comiendo y ve llegar a un ratón, deberá devorarlo.
+- Si únicamente hay ratones comiendo y llega un gato, el gato esperará a que los ratones terminen de comer para poder acercarse y comer.
+
+Lenguaje y entorno: 
+Se usó el lenguaje de Python dentro del entorno de VSCode. Para poder ejecutarlo desde la terminal del sistema, es necesario tener instalado Python; una vez estemos en la terminal, debemos dirigirnos a la carpeta dónde se enceuntre guardado y posteriormente escribir el nombre del archivo (con todo y la extensión): GatosRatones.py
+
+Estrategia de sincronización:
+Se hizo uso de un semáforo para limitar el número de gatos y ratones que pueden comer simultáneamente, gestionando así el acceso a los platos. También se usó un mutex para el número de gatos y de ratones que están comiendo, asegurando la exclusión mutua en secciones críticas, permitiendo que si hay gatos comiendo y llega un ratón, éste sea devorado, y si únicamente hay ratones comiendo y llega un gato, éste esperará hasta que todos los ratones dejen de comer.   
+
+Refinamiento:
+Este problema no presentaba ningún caso de refinamiento.
+
+Duda:
+Noté que cuando tenemos muchos gatos, al ejecutar el progrma hay ocasiones en que los ratones mueren inmediatamente al querer comer de un plato, ya que es muy probable que haya al menos un gato comiendo. Para intentar "solucionar" esto, opté por hacer más grande el periodo de llegada y espera de los gatos, así como poner más ratones en relación al número de gatos. 
