@@ -83,4 +83,4 @@ fuera un examen parcial.
 
 ## Calificaciones y comentarios
 
-Conforme vaya calificando, [los iré publicando aquí](./calificaciones.org).
+Conforme vaya calificando, [los iré publicando aquí](./calificaciones.md).
