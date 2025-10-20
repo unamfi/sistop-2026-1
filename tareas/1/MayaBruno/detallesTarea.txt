@@ -1,0 +1,5 @@
+El problema que decidí resolver fue el problema de Santa Claus, el cual consiste en coordinar la interacción entre Santa, los elfos y los renos, evitando condiciones de carrera y asegurando una correcta sincronización entre los procesos concurrentes.
+El programa fue desarrollado en el lenguaje Python, utilizando el entorno Sublime Text.
+Para ejecutarlo, se necesita tener instalado Python y abrir una terminal en la carpeta del archivo. Posteriormente ejecutarlo con el comando:
+python implementacionSanta.py
+La estrategia de sincronización empleada incluyó el uso de mutex para controlar el acceso a recursos compartidos y barreras para coordinar los puntos de reunión entre los hilos, esto para que las acciones de Santa, los elfos y los renos ocurran en el momento adecuado.
