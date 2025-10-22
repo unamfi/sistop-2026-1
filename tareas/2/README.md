@@ -1,7 +1,7 @@
 # Comparación de planificadores
 
-	Tarea creada: 20xx.xx.xx
-    Entrega: 20xx.xx.xx
+	Tarea creada: 2025.10.22
+    Entrega: 2025.10.28
 
 Revisamos en clase los mecanismos de planificación de procesos,
 comenzando con los más sencillos (FCFS/FIFO, RR, SPN), y avanzando
@@ -50,6 +50,18 @@ cómo sería la ejecución. Del ejemplo anterior:
 	  AAABBBBCCBDDDDEEEEDE
 	  SPN: T=5.6, E=1.6, P=1.32
 	  AAACCBBBBBDDDDDEEEEE
+
+¡Ojo! No olviden considerar (incluso en caso de irse por la alternativa más
+simple) considerar qué pasa cuando la _carga aleatoria_ que generan incluye
+_huecos_ en el tiempo. Por ejemplo:
+
+    A:0, t=2; B:1, t=5; C=8, t=3; D=9, t=4
+	FCFS: AABBBBB-CCCDDDD
+	RR1:  AABBBBB-CDCDCDD
+	(...)
+
+Esto es, ¡_no pueden poner en ejecución a un proceso que no ha llegado
+aún_!
 
 ## ¡Vamos por el 10!
 
