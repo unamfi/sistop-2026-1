@@ -1,0 +1,257 @@
+* Comentarios reiterados para varios de los compañeros
+
+** Mutex largo
+
+Tener un bloque tan largo durante el cual (p.ej) los desarrolladores tienen
+el acceso exclusivo mediante =mutex= resuelve probablemente la mayor parte
+de los problemas de sincronización, pero causa que disminuya la ejecución
+paralela. ¡Deben /sostener/ un =mutex= durante /el tiempo mínimo necesario/
+para la sección crítica!
+
+** ¡No te repitas! (Don't Repeat Yourself / DRY)
+
+Cuando realizamos ejercicios como este es común que /copiemos y adecuemos/
+código, y que aparezca código casi idéntico duplicado en nuestro
+problema. Tal vez /hackers/ y /serfs/ tienen casi exactamente la misma
+lógica, o la mayor parte de la lógica de /gatos/ y /ratones/ se parezca
+mucho, y se diferencíen sólo en un pequeño /párrafo/.
+
+Sin embargo, ¡háganse a la costumbre de no /repetir su código/! Intenten
+/parametrizar/ las funciones, y exhibir comportamientos ligeramente
+distintos /basados en los parámetros/, no en una función completa
+diferente/. Adoptar esto como una práctica habitual les ayudará
+particularmente cuando tengan que /dar mantenimiento/ a su código en el
+futuro.
+
+* El cruce del río
+** Alvarez Eduardo, Morales Arumy
+- Documentación :: [[./AlvarezEduardo-MoralesArumy/Tarea01. Ejercicios_de_Sincronización.pdf][Tarea01. Ejercicios_de_Sincronización.pdf]]
+- Archivos :: [[./AlvarezEduardo-MoralesArumy/T01_CruceRio.py][T01_CruceRio.py]]
+- Comentarios ::
+  - La implementación es poco habitual: que se formen primero y suban
+    después no es habitual. ¡Pero está muy bien! 😃
+  - ⇒ Comentario reiterado: *Mutex largo*
+- Calificación :: 8
+
+** Luna Diego, Coronado Diego
+- Documentación :: [[./LunaDiego-CoronadoDiego/LunaDiego-CoronadoDiego_Tarea1_cruce_rio.pdf][LunaDiego-CoronadoDiego_Tarea1_cruce_rio.pdf]]
+- Archivos :: [[./LunaDiego-CoronadoDiego/LunaDiego-CoronadoDiego_Tarea1_cruce_rio.py][LunaDiego-CoronadoDiego_Tarea1_cruce_rio.py]]
+- Comentarios ::
+  - Buen uso de colores, facilita entender la ejecución
+  - Buena cobertura de comentarios
+  - ⇒ Comentario reiterado: *Mutex largo*
+- Calificación :: 9
+
+** Sierra Mariana y Tapia Andrés
+- Documentación :: [[./SierraMariana-TapiaAndrés/README.md][README.md]]
+- Archivos :: [[./SierraMariana-TapiaAndrés/tarea01.py][tarea01.py]]
+- Comentarios ::
+  - ¡Ojo! Si dos alumnos forman equipo, *hagan una única entrega*, no hagan
+    dos entregas independientes.
+  - Hace mucho que no veía una resolución basada en /capitanes/ como la
+    tuya. ¡Muy bueno! 😃
+  - Si bien la lógica es más compleja que en el código de tus compañeros,
+    envías suficientes mensajes descriptivos a consola para entender bien
+    el progreso del cruce.
+  - ¡Excelente que manejes un timeout!
+  - ⇒ Comentario reiterado: ¡No te repitas! (DRY): Código casi idéntico
+    para /hackers/ y para /serfs/
+- Calificación :: 10
+
+** Tejeda, Abraham
+- Documentación :: [[./Tejeda Abraham/Manual, Funcion y logica..pdf][Manual, Funcion y logica..pdf]]
+- Archivos :: [[./Tejeda Abraham/cruce_del_rio.py][cruce_del_rio.py]]
+- Comentarios ::
+  - ¡Muy buena implementación! Orientación a objetos, funciones separadas
+    granularmente, manejo de parametrización desde línea de
+    comando... ¡Excelente!
+  - Implementación que emplea =Lock=, =Barrier= y =Semaphore=. ¡Excelente!
+    😃
+  - Es bastante frecuente (dependiendo de las probabilidades especificadas
+    con =--p_hacker=, claro) que la última balsa no pueda zarpar por no
+    lograr un equilibrio, y el programa quede detenido esperando. Sería
+    bueno poder reportar esta situación.
+- Calificación :: 10
+
+* Los alumnos y el asesor
+** Avila Alonso, Medina Samuel
+- Documentación :: [[./AvilaAlonso-MedinaSamuel/Ejercicio_sincronizacion.pdf][Ejercicio_sincronizacion.pdf]]
+- Archivos :: [[./AvilaAlonso-MedinaSamuel/main.cpp][main.cpp]]
+- Comentarios ::
+  - ¡Vaya! Alumnos que se atreven a /jugar/ con código C++. ¡Excelente! 😃
+    - ... Pero, siendo un lenguaje que hay que compilar... ¿No tendría que
+      haber llevado un =.gitignore=? 🤔
+  - Me parece que comenzaron a comentar su código previo a la entrega, pero
+    únicamente llegaron a detallar la función de las cuatro variables de
+    parámetros. Acostúmbrense a comentar /mientras se desarrolla/.
+    - ¿Y qué comentar? Cualquier cosa que les parezca ingeniosa o tal vez
+      difícil de entender.
+  - El /sueño/ del profesor no está implementado mediante sincronización,
+    sino que duerme incondicionalmente por 1000 milisegundos. Puede llegar
+    un alumno, tocar la puerta... y el profe va a seguir roncando hasta que
+    sea su hora de despertar. ¡Debería /dormirse/ sobre un mecanismo de
+    sincronizacíón!
+  - Falta también señalización para notificar al profesor cuando va a
+    iniciar una pregunta del estudiante, o al estudiante cuando el profesor
+    le termina de responder.
+- Calificación :: 7
+
+** Castañeda Ariana
+- Documentación :: [[./CastañedaAriana/T1_Sistemas_Operativos.pdf][T1_Sistemas_Operativos.pdf]]
+- Archivos :: [[./CastañedaAriana/alumnos_asesor.py][alumnos_asesor.py]]
+- Comentarios ::
+  - La lógica que presentas hace que el profesor se duerma entre alumno y
+    alumno... /incluso si hay otros alumnos sentados dentro del cubículo/:
+    #+begin_src text
+      Profesor terminó con el alumno 3.
+      Profesor despierta para atender al alumno 6.
+      Profesor atendiendo al alumno 6...
+      Alumno 6 está siendo atendido.
+      Profesor terminó con el alumno 6.
+      Profesor despierta para atender al alumno 8.
+      Profesor atendiendo al alumno 8...
+    #+end_src
+    Me parece que da muy mala impresión 😉
+    - El profesor /únicamente debe dormirse/ si el número de alumnos que
+      están esperándolo (en las sillas o afuera del salón) es de 0.
+    - Y como no puedes despertar si no te dormiste... 😉
+- Calificación :: 7.5
+
+** Tapia Angel
+- Documentación :: [[./TapiaAngel/Resolucion.txt][Resolucion.txt]]
+- Archivos :: [[./TapiaAngel/AlumnosAsesor.py][AlumnosAsesor.py]]
+- Comentarios ::
+  - ¡Me gusta que tengas un =while True= anidado, y detectes si
+    =alumnos_esperando == 0= para /escapar/ del interno con un =break=! Es
+    una salida prefectamente válida, y muy poco habitual.
+  - Buen estilo de programación, buena densidad de comentarios.
+- Calificación :: 10
+
+* El elevador
+** Chavez Alejandro
+- Documentación :: [[./ChavezAlejandro/Tarea_1_SO.pdf][Tarea_1_SO.pdf]]
+- Archivos :: [[./ChavezAlejandro/ejerciciosSincElevador.py][ejerciciosSincElevador.py]], [[./ChavezAlejandro/ejerciciosSincElevadorOri.py][ejerciciosSincElevadorOri.py]], [[./ChavezAlejandro/ejerciciosSincElevadorRef.py][ejerciciosSincElevadorRef.py]]
+- Comentarios ::
+  - ¡Excelente documentación! Y me parece genial que identifiques (¡y
+    detalles!) los problemas en tus primeras implementaciones.
+  - ¡Excelente que utilices variables de condición! Como viste (y
+    comentaste), son más complejas... pero una vez que las vas /domando/,
+    puedes apreciar que son mucho más poderosas.
+  - Efectivamente... Sería mucho mejor que el elevador no pasara su
+    existencia /quemando electricidad/ subiendo y bajando en lo que espera
+    a ser llamado. Podrías implementar un contador de usuarios pendientes
+    de atención para reducir el gasto energético...
+  - ¡Muy bien por el uso de =Event=, la cola de eventos! Ni siquiera les
+    mostré esta construcción 😉
+- Calificación :: 9
+
+** Garcia Emilio
+- Documentación :: [[./GarciaEmilio/README.md][README.md]]
+- Archivos :: [[./GarciaEmilio/tarea.py][tarea.py]]
+- Comentarios ::
+  - ⇒ Comentario reiterado: *Mutex largo*
+  - Los usuarios hacen espera semi-activa (líneas 65–73).
+    - En vez de un =while= (que, sí, tiene una demora de un segundo — pero
+      es lógica de /espera activa/, sería más eficiente y correcto que cada
+      usuario, tras subir al elevador, se formara en la cola /de su piso
+      destino/, y se /durmiera/ hasta que el hilo elevador lo despertara.
+    - También podría resolverse con una /variable de condición/.
+- Calificación :: 8
+
+* El servidor Web
+** Gonzalez Michelle
+- Documentación :: [[./GonzalezMichelle/servidor_web.pdf][servidor_web.pdf]]
+- Archivos :: [[./GonzalezMichelle/servidor_web.py][servidor_web.py]]
+- Comentarios ::
+  - En =trabajador()=, haces una doble verificación: Recibes una
+    señalización sobre =sem_hay_peticiones=, pero posteriormente (y con
+    =mutex_peticiones=) verificas si hay algún dato en
+    =peticiones_pendientes= (y si no, saltas a =continue=). ¿Por qué? Me
+    huele a algún uso subóptimo de sincronización.
+  - Un asunto menor, aunque algo importante (de forma): El proceso jefe
+    debería estar /esperando por una conexión/, y deberían aparecer
+    procesos cliente (conexiones de red) que lo despertaran y le hicieran
+    solicitudes. Los procesos clientes son triviales de implementar, no
+    alteran mucho tu lógica, sólo tendría que agregarse una señalización.
+- Calificación :: 8
+
+** Hernandez Josue, Escobar Victor
+- Documentación :: [[./HernandezJosue-EscobarVictor/README.txt][README.txt]]
+- Archivos :: [[./HernandezJosue-EscobarVictor/Tarea1_refinado.py][Tarea1_refinado.py]]
+- Comentarios ::
+  - Implementación limpia, orientada a objetos
+  - ¡implementan el /refinamiento/ de métricas! ¡Excelente! (y con una
+    interfaz bastante limpia 😃)
+- Calificación :: 10
+
+* Gatos y ratones
+** Gabriel Yukioayax
+- Documentación :: [[./GabrielYukioayax/Gatos y Ratones.pdf][Gatos y Ratones.pdf]], [[./GabrielYukioayax/Gatos y Ratones.txt][Gatos y Ratones.txt]]
+- Archivos :: [[./GabrielYukioayax/Gatos y Ratones/Especie.java][Especie.java]], [[./GabrielYukioayax/Gatos y Ratones/Gato.java][Gato.java]], [[./GabrielYukioayax/Gatos y Ratones/GatosyRatones.java][GatosyRatones.java]], [[./GabrielYukioayax/Gatos y Ratones/Platos.java][Platos.java]], [[./GabrielYukioayax/Gatos y Ratones/Raton.java][Raton.java]], [[./GabrielYukioayax/Gatos y Ratones/Sincronizador.java][Sincronizador.java]]
+- Comentarios ::
+  - Tal vez no me guste Java... ¡Pero me da mucho gusto que implementen
+    algo diferente a la /monocultura/ de Python! 😉
+    - ... Pero, siendo un lenguaje que hay que compilar... ¿No tendría que
+      haber llevado un =.gitignore=? 🤔
+  - Excelente que emplees primitivas de sincronización distintas de las que
+    les enseñé (=ReentrantLock=, =Condition=, =ArrayBlockingQueue=...)
+  - ⇒ Comentario reiterado: ¡No te repitas! (DRY): Código casi idéntico
+    para =Gato= y para =Raton=
+  - El protocolo que siguen, verificando por =Especie.NADIE=, es efectivo,
+    pero lleva a la inanición: si ejecuto con =p=1= (matando la
+    concurrencia), el control alterna frecuentemente, pero a partir de
+    =p=2=, como /casi/ todo el tiempo hay algún animal comiendo... La
+    probabilidad de cambio de control es muy baja, y terminan comiendo
+    primero todos los de un tipo, luego todos los del otro.
+    - Podría reducirse la inanición obligando a que cada animal sólo tenga
+      hambre con determinada probabilidad, o implementando un torniquete
+      como el de los /lectores y escritores/...
+- Calificación :: 8
+
+** Hernandez Jorge, Zamora Antonio
+- Documentación :: [[./HernandezJorge-ZamoraAntonio/Resolución.txt][Resolución.txt]]
+- Archivos :: [[./HernandezJorge-ZamoraAntonio/GatosRatones.py][GatosRatones.py]]
+- Comentarios ::
+  - Los ratones verifican que no haya gatos, pero si éstos aparecen
+    posteriormente, van a ser devorados mientras terminan de comer
+    - ¿Y nuestro /acuerdo entre caballeros/ de evitar ir a comer si hay
+      ratones? 🙁
+    - Una y otra vez, después de sólo una vuelta, los gatos se comieron al
+      100% de los ratones 💀
+  - Las restricciones máximas (número de platos) están bien
+    implementados. Veo que /intentaron/ implementar una exclusión
+    categórica, controlando el número de /animales_como_el_actual/
+    comiendo, pero no lo hicieron completo
+  - Me parece curioso que la acción de /comerse al ratón/ esté implementada
+    dentro de =raton()= y no de =gato()=: El ratón es el que se da cuenta
+    de que le toca morirse.
+- Calificación :: 6
+
+** Jimenez Evelin, Lara Emmanuel
+- Documentación :: [[./JimenezEvelin-LaraEmmanuel/Tarea_1_Sistemas_Operativos.pdf][Tarea_1_Sistemas_Operativos.pdf]]
+- Archivos :: [[./JimenezEvelin-LaraEmmanuel/gatos_y_ratones-cazar.py.py][gatos_y_ratones-cazar.py.py]], [[./JimenezEvelin-LaraEmmanuel/gatos_y_ratones_sin_cazar.py.py][gatos_y_ratones_sin_cazar.py.py]]
+- Comentarios ::
+  - Sincronización usando variables de condición. ¡Muy bien! 😃
+  - Entrega de dos versiones, una con el arreglo “irreal”, la otra con
+    cacería. ¡Excelente!
+    - ... Y la diferencia entre ambas versiones es bastante
+      significativa.
+  - ⇒ Comentado reiterado: *¡No te repitas! (DRY)*. La duplicación de
+    lógica entre el par de funciones =gato_entra()= / =gato_sale()= y
+    =raton_entra()= / =raton_sale()= es muy alta.
+- Calificación :: 10
+
+* Santa Claus
+** Maya Bruno
+- Documentación :: [[./MayaBruno/detallesTarea.txt][detallesTarea.txt]]
+- Archivos :: [[./MayaBruno/implementacionSanta.py][implementacionSanta.py]]
+- Comentarios ::
+  - Muy buena interfaz, el manejo de colores permite seguir fácilmente de
+    quién se trata cada línea, y das suficiente información en cada mensaje
+    para que resulte útil.
+  - Bien implementado con barreras hechas con semáforos 😃
+    - (¿podría haberte convenido, para mayor simplicidad, utilizar
+      directamente objetos =Barrier=?)
+    - Sería una manera de reducir el código repetido (⇒ ver comentario
+      reiterado: *¡No te repitas! (DRY)*)
+- Calificación :: 9
