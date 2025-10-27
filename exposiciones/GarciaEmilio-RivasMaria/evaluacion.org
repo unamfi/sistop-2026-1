@@ -1,0 +1,80 @@
+#+title: Evaluación de la exposición
+#+author: Gunnar Wolf
+
+* Orquestadores de contenedores
+
+- Tema presentado por :: Emilio García y María Lucía Rivas
+- Calificación global ::
+
+|------------------------+------+--------------------+------+---------|
+| Evaluación  compañeros | Peso | Evaluación docente | Peso | *Total* |
+|------------------------+------+--------------------+------+---------|
+|                   8.91 |  0.3 |                6.5 |  0.7 |    7.22 |
+|------------------------+------+--------------------+------+---------|
+#+TBLFM: @2$5=$1*$2+$3*$4;f-2
+
+* Evaluación grupal
+
+|              | 1 | 2 | 3 | 4 | 5 | Total |
+|--------------+---+---+---+---+---+-------|
+| Originalidad | 0 | 0 | 0 | 3 | 4 |  9.14 |
+| Nivel        | 0 | 0 | 1 | 1 | 5 |  9.14 |
+| Relevancia   | 0 | 0 | 0 | 2 | 5 |  9.43 |
+| Claridad     | 0 | 0 | 2 | 2 | 3 |  8.29 |
+| Presencia    | 0 | 0 | 1 | 3 | 3 |  8.57 |
+|--------------+---+---+---+---+---+-------|
+|              |   |   |   |   |   |  8.91 |
+#+TBLFM: @2$7..@6$7=10 * (0.2*$2 + 0.4*$3 + 0.6*$4 + 0.8*$5 + $6 ) / vsum($2..$6); f-2::@7$7=vmean(@2$7..@6$7); f-2
+
+** Comentarios de los compañeros
+- Muy buena presentacion me gsuto mucho
+- Muy buena presentación!!!
+
+* Evaluación por parte del docente
+
+| *Aspecto*              | *Peso* | *Evaluación* | *Puntos* |
+|------------------------+--------+--------------+----------|
+| Originalidad del tema  |    0.1 |          7.5 |     0.75 |
+| Material desarrollado  |    0.2 |          7.5 |      1.5 |
+| Contenido              |    0.2 |            5 |       1. |
+| Fuentes bibliográficas |    0.1 |            5 |      0.5 |
+| Uso del tiempo         |    0.1 |            5 |      0.5 |
+| Dominio del tema       |   0.15 |          7.5 |    1.125 |
+| Presencia              |   0.15 |          7.5 |    1.125 |
+|------------------------+--------+--------------+----------|
+| *Global*               |        |              |     6.50 |
+#+TBLFM: @<<$4..@>>$4=$2*$3::$4=vsum(@<<..@>>);f-2
+
+** Comentarios
+- ¿La historia de los contenedores comienza con Google? Se cepillaron
+  décadas de historia 🙁
+  - Posiblemente, si están hablando de la historia de los /orquestadores/,
+    que no es lo mismo...
+- Se nota mucho en el ritmo cuando la presentación se da leyendo
+  directamente del texto que presentaron... Eviten hacerlo, porque se
+  pierde dinamismo en la presentación.
+- Es difícil comenzar a explicar “orquestación” antes de presentar _de qué
+  se trata_ lo que van a presentar.
+- Presentan en 03:52 “un ejemplito de cómo funciona la orquestación”, y
+  justo cuando me estoy preparando para comenzar a ver contenido
+  técnico... la siguiente palabra es “Y bueno”. Cambio de tema por completo
+  🙁
+- Cubrir a esas alturas máquinas virtuales, cuando el tema de ustedes no lo
+  incluye, es /agregar paja/, a menos que construyan sobre de esto. Meter
+  todos los conceptos de “partir hardware”, el “hypervisor”, etc. no es
+  necesario.
+  - 6:45 hablas de “aquí tenemos una tablita”, pero sólo se presenta una
+    imagen con líneas borrosas en pantalla.
+- El “corazón” de la presentación, me parece, es cuando hablan de
+  Kubernetes, entre los 13:30 y los 18:30. Este contenido me parece de
+  mucho mejor calidad y relevancia que lo que había visto hasta ese
+  momento, y realmente brillaría por sí sólo — mucho más si fuera
+  acompañado de una demostración práctica de cómo se utiliza lo que describen.
+  - ¡Perfecto! hacia 19:00 comienza la demo que tanto estaba pidiendo 😃
+    - nginx (“Engine X”) no es algo que no importa lo que sea ni “algo que
+      ayuda a controlar la red”: es un servidor Web. ¡Es importante saber
+      qué es lo que presentan! 😉
+    - ¡Ojo! Mencionaorn que el tiempo de inicio de un contenedor esde
+      milisegundos contra segundos o minutos de una VM. Pero le toma más de
+      30 segundos inicializarse a nginx (que... ¡típicamente arranca en
+      menos de dos segundos!) ¿Por qué habrá sido?

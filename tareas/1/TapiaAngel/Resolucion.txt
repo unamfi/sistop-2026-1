@@ -1,0 +1,41 @@
+Problema a resolver: Los alumnos y el asesor 
+Este problema tiene 4 consideraciones importantes 
+- Hay N cantidad de sillas, si están vacías, el profesor duerme en ellas, si no, están usadas por alumnos 
+- Los alumnos pueden tocar la puerta, pero solo entrará N cantidad de ellos.
+- Cada alumno puede plantear M preguntas y esperar su respuesta (1 a la vez), sin embargo, los demás alumnos 
+pueden hacer  preguntas entre una y otra 
+- Los alumnos sentados deben esperar su turno, cuando desocupen su silla, puede ser usada por otro alumno que este fuera.
+
+Lenguaje y entorno: 
+Para el caso de este programa, se desarrolló en el lenguaje Python 
+para ejecutarlo, debemos tener instalada en la maquina el intérprete de Python
+debemos ir a la carpeta del programa y ejecutar en la linea de comandos
+python3 [nombrePrograma].py
+
+Estrategia de sincronizacion utilizada: 
+Para resolver este problema, lo que usamos principalmente fueron semáforos, multiplex y un 
+mutex, los semáforos fueron implementados más que nada porque son sencillos y sirven 
+bien para este tipo de problemas en los cuales hay que esperar a que el profesor acabe de 
+atender a 1 alumno para pasar a otro, y usamos el mutex para actualizar la variable de alumnos
+esperando en la región critica y que no hubiera errores, el multiplex fue usado en la parte de 
+las sillas, ya que había mas de 1 silla que podía ser requerida a la vez. 
+
+Lo que usé para resolver el problema fueron las estrategias vistas en el curso, por ejemplo 
+la del productor-consumidor la use con lo del profesor, el productor es el alumno ya que es el
+que "produce" las preguntas y el profesor las consume. 
+Otra estrategia fue la de la cinta de ensamblaje que refiere a un buffer lleno, en la cual no 
+podíamos poner más cajas si la cinta estaba llena, esta la use con las sillas, donde no podían
+pasar más si ya estaban ocupadas. 
+
+Refinamiento: Para el caso de este problema no se mostraba en la presentación algún refinamiento 
+por lo que no se realizó. 
+
+Dudas: Algunas veces al final de la ejecución salen varios carteles de:
+"El profesor no tiene a quién atender y se va a mimir 😴
+El profesor se despierta por un alumno 😠"
+Que se repiten según la cantidad de hilos, esto supuestamente se solucionaba con la linea 
+"hilo_profesor.daemon = True"
+La cual termina el proceso en cuanto acaba el main, sin embargo algunas veces sigue apareciendo
+este error. 
+
+
