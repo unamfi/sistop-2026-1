@@ -39,7 +39,7 @@ public class Utilidades {
         return new ResultadoSimulacion(sumT/n, sumE/n, sumP/n, linea);
     }
 
-    // Llegadas (en orden por id para estabilidad)
+   
     public static void encolarLlegadas(List<Proceso> ps,int tiempo,Deque<Proceso> cola){
         List<Proceso> llegados = ps.stream()
                 .filter(p -> p.llegada==tiempo)

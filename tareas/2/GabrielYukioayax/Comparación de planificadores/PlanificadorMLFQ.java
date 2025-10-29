@@ -55,7 +55,7 @@ public class PlanificadorMLFQ implements Planificador{
                 }
             }
 
-            // Elegir
+  
             if(ejecutando==null){
                 for(int lv=0; lv<colas.length; lv++){
                     if(!colas[lv].isEmpty()){
