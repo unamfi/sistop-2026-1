@@ -4,7 +4,7 @@
     Entrega en tiempo: 2024.08.26
 
 Posiblemente, varios de ustedes se han confundido (o lo harán) al
-enviar un un *pull request*, incluyendo cambios de más o de menos
+enviar un *pull request*, incluyendo cambios de más o de menos
 respecto a lo que querían enviar.  Si no nos cuidamos, pronto enviarán
 incluso algún proyecto o exposición en distintos estados de
 desarrollo.
