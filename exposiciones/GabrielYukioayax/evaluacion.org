@@ -1,0 +1,63 @@
+#+title: Evaluación de la exposición
+#+author: Gunnar Wolf
+
+* Mecanismos de aislamiento y privilegios en sistemas operativos
+
+- Tema presentado por :: Yukioayax Gabriel
+- Calificación global :: *9.36*
+
+|------------------------+------+--------------------+------+---------|
+| Evaluación  compañeros | Peso | Evaluación docente | Peso | *Total* |
+|------------------------+------+--------------------+------+---------|
+|                    9.6 |  0.3 |               9.25 |  0.7 |    9.36 |
+|------------------------+------+--------------------+------+---------|
+#+TBLFM: @2$5=$1*$2+$3*$4;f-2
+
+* Evaluación grupal
+
+|              | 1 | 2 | 3 | 4 | 5 | Total |
+|--------------+---+---+---+---+---+-------|
+| Originalidad | 0 | 0 | 0 | 0 | 6 | 10.00 |
+| Nivel        | 0 | 0 | 0 | 1 | 5 |  9.67 |
+| Relevancia   | 0 | 0 | 0 | 0 | 6 | 10.00 |
+| Claridad     | 0 | 0 | 0 | 2 | 4 |  9.33 |
+| Presencia    | 0 | 0 | 0 | 3 | 3 |  9.00 |
+|--------------+---+---+---+---+---+-------|
+|              |   |   |   |   |   |  9.60 |
+#+TBLFM: @2$7..@6$7=10 * (0.2*$2 + 0.4*$3 + 0.6*$4 + 0.8*$5 + $6 ) / vsum($2..$6); f-2::@7$7=vmean(@2$7..@6$7); f-2
+
+** Comentarios de los compañeros
+- Es una muy buena, muy bien explicada y con ejemplo…
+
+* Evaluación por parte del docente
+
+| *Aspecto*              | *Peso* | *Evaluación* | *Puntos* |
+|------------------------+--------+--------------+----------|
+| Originalidad del tema  |    0.1 |           10 |       1. |
+| Material desarrollado  |    0.2 |           10 |       2. |
+| Contenido              |    0.2 |          7.5 |      1.5 |
+| Fuentes bibliográficas |    0.1 |          7.5 |     0.75 |
+| Uso del tiempo         |    0.1 |           10 |       1. |
+| Dominio del tema       |   0.15 |           10 |      1.5 |
+| Presencia              |   0.15 |           10 |      1.5 |
+|------------------------+--------+--------------+----------|
+| *Global*               |        |              |     9.25 |
+#+TBLFM: @<<$4..@>>$4=$2*$3::$4=vsum(@<<..@>>);f-2
+
+** Comentarios
+- Tu acercamiento al tema me parece muy bueno, muy “fresco”, y diferente de
+  como se trata habitualmente 😃
+- Hablas a muy buen ritmo, y no repites textualmente el texto de tu
+  documento. ¡Muy bien! 😃
+- Aunque cuando explicas conceptos como el modelo de permisos de Unix,
+  describiendo la matrix =r,w,x= × =dueño,grupo,otros= habría sido bueno
+  que emplearas algún apoyo gráfico para facilitar la comprensión.
+- Si bien me pareció excelente que abordaras sistemas operativos menos
+  conocidos por los compañeros, lo hiciste únicamente de manera
+  /enunciativa/; probablemente la exposición podría haber resultado mejor
+  si te centraras en menos sistemas, pero presentaras ejemplos /seguibles/
+  y más detallados de comportamiento
+  - En las características de los *BSD, Solaris, Minix y los de tiempo real
+    mencionaste algunos puntos incorrectos, falsos, o antiguos y ya
+    superados... pero por el nivel tan somero de acercamiento, no me pongo
+    a corregirlos caso por caso 😉
