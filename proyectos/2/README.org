@@ -108,6 +108,30 @@ contenidos del /«disco»/?
 - Es un sistema de archivos /plano/ — No maneja subdirectorios.
 - Después del directorio, todo el espacio restante es espacio de datos.
 
+** FUSE
+
+Verás que en la rúbrica de calificación, bajo el rubry /Interfaz usuario/,
+menciono el desarrollo de un /módulo de FUSE/. Hablé al respecto al
+plantear el proyecto. ¿Qué es? ¿Con qué se come?
+
+[[https://github.com/libfuse/libfuse][FUSE (Filesystem in Userspace)]] es un conjunto de bibliotecas, parte en C y
+parte en lenguajes de alto nivel, parte ejecutándose en espacio de kernel y
+parte en espacio de usuario, que permiten el /desarrollo fácil y ágil/ de
+código que se integra con Linux (y, con ciertos trucos, con otros sistemas
+operativos) para implementar sistemas de archivos.
+
+Esa descripción asusta... e impone, ¿no?
+
+Por eso, desarrollé un proyectito llamado «[[https://gitlab.com/gunnarwolf/fuse_in_python_guide/][Una guía de la manita para
+escribir sistemas de archivos FUSE en Python]]». Lo tengo desarrollado como
+un proyecto de texto y código, y di un par de charlas al respecto. Los
+invito a ver , en [[https://www.youtube.com/watch?v=2t9EvJaKVac][el video /largo/, con demostraciones del código]] (53
+minutos) presentado para las /Jornadas Regionales de Software Libre 2024/
+en Santa Fe, Argentina, o el [[https://www.youtube.com/watch?v=QouNzHoLaus][video /corto/ (34 minutos)]] en que sólo
+presento el proyecto, que presenté en el congreso [[https://nerdear.la/][Nerdear.la]], Ciudad de
+México, 2024.
+
+¡Espero que con esto logre animarlos a escribir modulitos de FUSE! 😃
 
 ** Calificación del proyecto
 
