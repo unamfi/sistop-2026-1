@@ -1,0 +1,237 @@
+** Alvarez Eduardo
+- Documentación :: [[./AlvarezEduardo/Tarea 2_Comparación de Planificadores.pdf][Tarea 2_Comparación de Planificadores.pdf]]
+- Archivos :: [[./AlvarezEduardo/T02_Comparacion_Planificadores.py][T02_Comparacion_Planificadores.py]]
+- Calificación :: 10
+  - Tabla de resultados :: ✅ Sí (FCFS, RR1, RR4, SPN)
+  - Esquema visual :: ✅ Sí (secuencia de ejecución completa)
+  - Algoritmo de colas múltiples :: ✅ Sí (FB)
+  - Comentarios ::
+    - Implementación excelente con todos los algoritmos requeridos.
+    - Código bien estructurado.
+    - Maneja /huecos/ correctamente.
+
+** Avila Alonso, Medina Samuel
+- Documentación :: [[./AvilaAlonso-MedinaSamuel/Comparacion_de_planificadores.pdf][Comparacion_de_planificadores.pdf]]
+- Archivos :: [[./AvilaAlonso-MedinaSamuel/tareaSO.py][tareaSO.py]]
+- Calificación :: 7.5
+  - Tabla de resultados :: ✅ Sí (FCFS, SPN, RR1, RR4)
+  - Esquema visual :: ✅ Sí (secuencia de ejecución)
+  - Algoritmo de colas múltiples :: ❌ No
+  - Comentarios ::
+    - No incluye algoritmos de colas múltiples 🙁
+    - Buen detalle el que cualquiera de los procesos modelados pueda llegar
+      en cualquier momento, y la lista se presente ordenada no
+      alfabéticamente, sino que por llegada
+      - No maneja los /huecos/: Si el primer proceso llega con /t>0/, o si
+        hay espacio entre alguno de los procesos, se distorsionan las métricas
+      - Se presentan distorsiones como la siguiente:
+	#+begin_src text
+	  B: 0, t=6; A: 5, t=5; D: 5, t=4; E: 11, t=4; C: 12, t=2
+	  (...)
+	  RR1: T=18.60, E=14.40, P=4.24
+	  BADECBADECBADEBADEBAB
+	#+end_src
+	=A= apenas llega en /t=5/, por lo que tendría que haberse
+        programado iniciando con =BBBBB= (en los primeros 5 /ticks/ hay
+        sólo un proceso disponible)
+
+** Cano Zaid
+- Documentación :: [[./CanoZaid/Reporte Tarea02.pdf][Reporte Tarea02.pdf]]
+- Archivos :: [[./CanoZaid/Tarea02.py][Tarea02.py]]
+- Calificación :: 9
+  - Tabla de resultados :: ✅ Sí (FCFS, RR1, RR4, SPN)
+  - Esquema visual :: ✅ Sí (secuencia visual completa)
+  - Algoritmo de colas múltiples :: ❌ No
+  - Comentarios ::
+    - Implementación sólida con clases bien organizadas
+    - Muy bueno que presentes ejemplos fijos (incluyendo uno demostrando el
+      manejo de /huecos/) y ejecuciones aleatorias.
+
+** Castañeda Gonzalez Ariana
+- Documentación :: [[./CastañedaGonzalezAriana/T2.pdf][T2.pdf]], [[./CastañedaGonzalezAriana/fi.png][fi.png]], [[./CastañedaGonzalezAriana/ronda1.png][ronda1.png]], [[./CastañedaGonzalezAriana/ronda4.png][ronda4.png]], [[./CastañedaGonzalezAriana/unam.png][unam.png]]
+- Archivos :: [[./CastañedaGonzalezAriana/tarea_planificadores.py][tarea_planificadores.py]]
+- Calificación :: 10
+  - Tabla de resultados :: ✅ Sí (FCFS, RR1, RR4, SPN)
+  - Esquema visual :: ✅ Sí (Gantt textual completo)
+  - Algoritmo de colas múltiples :: ✅ Sí (FB y SRR implementados)
+  - Comentarios ::
+    - Implementación completa con todos los algoritmos, incluyendo FB y
+      SRR.
+    - Código bien estructurado.
+
+** Echevarria Luis
+- Documentación :: [[./EchevarriaLuis/tarea2_EchevarriaLuis.pdf][tarea2_EchevarriaLuis.pdf]]
+- Archivos :: [[./EchevarriaLuis/compara_planif.py][compara_planif.py]]
+- Calificación :: 10
+  - Tabla de resultados :: ✅ Sí (FCFS, RR1, RR4, SPN)
+  - Esquema visual :: ✅ Sí (secuencia detallada)
+  - Algoritmo de colas múltiples :: ✅ Sí (FB)
+  - Comentarios ::
+    - Implementación completa con clases bien diseñadas, manejo de estados
+      y algoritmos múltiples.
+    - Manejo adecuado de /huecos'
+    - Excelente nivel de comentarios.
+
+** Fuentes Leobardo
+- Archivos :: [[./FuentesLeobardo/Tarea2.py][Tarea2.py]]
+- Calificación :: 10
+  - Tabla de resultados :: ✅ Sí (FCFS, RR1, RR4, SPN)
+  - Esquema visual :: ✅ Sí (secuencia visual)
+  - Algoritmo de colas múltiples :: ✅ Sí (FB y SRR implementados)
+  - Comentarios ::
+    - Implementación completa con todos los algoritmos requeridos.
+    - Código estructurado y funcional, con manejo adecuado de /huecos/.
+
+    
+** Gabriel Yukioayax
+- Documentación :: [[./GabrielYukioayax/Comparación de planificadores.pdf][Comparación de planificadores.pdf]], [[./GabrielYukioayax/Comparación de planificadores/rondas.txt][rondas.txt]]
+- Archivos :: [[./GabrielYukioayax/Comparación de planificadores/GeneradorCargas.java][GeneradorCargas.java]], [[./GabrielYukioayax/Comparación de planificadores/Impresor.java][Impresor.java]], [[./GabrielYukioayax/Comparación de planificadores/Planificador.java][Planificador.java]], [[./GabrielYukioayax/Comparación de planificadores/PlanificadorFCFS.java][PlanificadorFCFS.java]], [[./GabrielYukioayax/Comparación de planificadores/PlanificadorMLFQ.java][PlanificadorMLFQ.java]], [[./GabrielYukioayax/Comparación de planificadores/PlanificadorRR.java][PlanificadorRR.java]], [[./GabrielYukioayax/Comparación de planificadores/PlanificadorSPN.java][PlanificadorSPN.java]], [[./GabrielYukioayax/Comparación de planificadores/Proceso.java][Proceso.java]], [[./GabrielYukioayax/Comparación de planificadores/ProcesoDefinicion.java][ProcesoDefinicion.java]], [[./GabrielYukioayax/Comparación de planificadores/ResultadoSimulacion.java][ResultadoSimulacion.java]], [[./GabrielYukioayax/Comparación de planificadores/Simulador.java][Simulador.java]], [[./GabrielYukioayax/Comparación de planificadores/Utilidades.java][Utilidades.java]]
+- Calificación :: 10
+  - Tabla de resultados :: ✅ Sí (FCFS, SPN, RR, MLFQ)
+  - Esquema visual :: ✅ Sí (línea de tiempo)
+  - Algoritmo de colas múltiples :: ✅ Sí (FB con configuración avanzada)
+  - Comentarios ::
+    - Implementación en Java muy completa
+    - Configurabilidad desde línea de comando, ¡muy bueno!
+      - un poco tedioso, sin embargo — tal vez algunos parámetros deberían
+        asumir valores por omisión?
+    - Excelente arquitectura... ¡pero carente de comentarios!
+      - Son tan importantes como, y cubren un papel complementario, a la
+        documentación
+
+** Garcia Emilio
+- Archivos :: [[./GarciaEmilio/tarea2.py][tarea2.py]]
+- Calificación :: 9
+  - Tabla de resultados :: ✅ Sí (FCFS, RR1, RR4, SPN)
+  - Esquema visual :: ✅ Sí (esquemas separados)
+  - Algoritmo de colas múltiples :: ❌ No
+  - Comentarios ::
+    - Implementación buena y sencilla
+    - No tienes nada de comentarios ni documentación 🙁
+
+** Gonzalez Michelle
+- Archivos :: [[./GonzalezMichelle/tarea2.py][tarea2.py]]
+- Calificación :: 10
+  - Tabla de resultados :: ✅ Sí (FCFS, SPN, RR1, RR4)
+  - Esquema visual :: ✅ Sí (Gantt textual)
+  - Algoritmo de colas múltiples :: ✅ Sí (SRR implementado con bonus)
+  - Comentarios ::
+    - Implementación completa con SRR innovador (bonus para nuevos
+      procesos).
+      - Interesante, pero... ¿no opera /en contra/ de los objetivos mismos
+        de SRR? 🤔
+    - Código bien documentado.
+
+** Hernandez Jorge, Zamora Antonio
+- Documentación :: [[./HernandezJorge-ZamoraAntonio/Tarea2.txt][Tarea2.txt]]
+- Archivos :: [[./HernandezJorge-ZamoraAntonio/Tarea2.py][Tarea2.py]]
+- Calificación :: 7.5
+  - Tabla de resultados :: ✅ Sí (FCFS, RR1, RR4, SPN)
+  - Esquema visual :: ✅ Sí (secuencia básica)
+  - Algoritmo de colas múltiples :: ❌ No
+  - Comentarios ::
+    - Implementación básica funcional
+
+** Jimenez Evelin, Lara Emmanuel
+- Documentación :: [[./JimenezEvelin-LaraEmmanuel/Tarea_2_Jimenez-Lara.pdf][Tarea_2_Jimenez-Lara.pdf]]
+- Archivos :: [[./JimenezEvelin-LaraEmmanuel/compara_planif.py][compara_planif.py]]
+- Calificación :: 10
+  - Tabla de resultados :: ✅ Sí (FCFS, RR1, RR4, SPN)
+  - Esquema visual :: ✅ Sí
+  - Algoritmo de colas múltiples :: ✅ Sí (FB y SRR implementados)
+  - Comentarios ::
+    - Implementación completa, arquitectura modular todos los
+      algoritmos.
+    - Excelente diseño.
+      - Configurable desde línea de comando
+      - Bien comentado y documentado
+
+** Luna Diego, Coronado Diego
+- Documentación :: [[./Luna.Diego-Coronado.Diego/Luna.Diego-Coronado.Diego_Tarea2_ComparaciondePlanificadores.pdf][Luna.Diego-Coronado.Diego_Tarea2_ComparaciondePlanificadores.pdf]]
+- Archivos :: [[./Luna.Diego-Coronado.Diego/Luna.Diego-Coronado.Diego_Tarea2_ComparaciondePlanificadores.py][Luna.Diego-Coronado.Diego_Tarea2_ComparaciondePlanificadores.py]]
+- Calificación :: 9
+  - Tabla de resultados :: ✅ Sí (FCFS, RR1, RR4, SPN)
+  - Esquema visual :: ✅ Sí (con colores ANSI)
+  - Algoritmo de colas múltiples :: ✅ Sí (FB implementado)
+  - Comentarios ::
+    - Implementación visual atractiva con colores.
+
+** Martínez José
+- Documentación :: [[./MartínezJosé/MartínezJoséTarea2.pdf][MartínezJoséTarea2.pdf]]
+- Archivos :: [[./MartínezJosé/MartínezJosé_Tarea2 (1).py][MartínezJosé_Tarea2 (1).py]]
+- Calificación :: 7.5
+  - Tabla de resultados :: ✅ Sí (FCFS, RR1, RR4, SPN)
+  - Esquema visual :: ✅ Sí (esquema visual básico)
+  - Algoritmo de colas múltiples :: ❌ No
+  - Comentarios ::
+    - Implementación funcional con visualización básica
+
+** Maya Bruno
+- Documentación :: [[./MayaBruno/DetallesTarea2.txt][DetallesTarea2.txt]]
+- Archivos :: [[./MayaBruno/tarea2bmt.py][tarea2bmt.py]]
+- Calificación :: 7.5
+  - Tabla de resultados :: ✅ Sí (FCFS, RR1, RR4, SPN)
+  - Esquema visual :: ✅ Sí (secuencia de caracteres)
+  - Algoritmo de colas múltiples :: ❌ No
+  - Comentarios ::
+    - Implementación funcional con conjuntos predefinidos.
+      - No hace corridas aleatorias, como fue solicitado 🙁
+    - Algoritmos básicos funcionan correctamente.
+
+** Morales Arumy
+- Documentación :: [[./MoralesArumy/T02_ComparacionDePlanificadores.pdf][T02_ComparacionDePlanificadores.pdf]]
+- Archivos :: [[./MoralesArumy/T02_ComparacionDePlanificadores.py][T02_ComparacionDePlanificadores.py]]
+- Calificación :: 10
+  - Tabla de resultados :: ✅ Sí (FCFS, RR1, RR4, SPN)
+  - Esquema visual :: ✅ Sí (timeline completa)
+  - Algoritmo de colas múltiples :: ✅ Sí (FB)
+  - Comentarios ::
+    - Implementación completa y correcta
+    - Pero no hay nada de comentarios en tu código 🙁 ¡Son muy importantes!
+      (hasta para ti misma!)
+
+** Rivas Maria
+- Documentación :: [[./RivasMaria/Tarea2-RivasMaria.pdf][Tarea2-RivasMaria.pdf]]
+- Archivos :: [[./RivasMaria/comparaPlani.py][comparaPlani.py]]
+- Calificación :: 10
+  - Tabla de resultados :: ✅ Sí (FCFS, RR1, RR4, SPN)
+  - Esquema visual :: ✅ Sí (secuencia básica)
+  - Algoritmo de colas múltiples :: ❌ No
+  - Comentarios ::
+    - Implementación básica funcional para algoritmos principales.
+
+** Tapia Andres, Sierra Mariana
+- Documentación :: [[./TapiaAndres-SierraMariana/README.md][README.md]]
+- Archivos :: [[./TapiaAndres-SierraMariana/Tarea02.py][Tarea02.py]]
+- Calificación :: 10
+  - Tabla de resultados :: ✅ Sí (FCFS, RR1, RR4, SPN)
+  - Esquema visual :: ✅ Sí (con colores ANSI)
+  - Algoritmo de colas múltiples :: ✅ Sí (FB y SRR implementados)
+  - Comentarios ::
+    - Excelente implementación
+      - Cubre todos los algoritmos
+      - Visualización amigable a color
+      - Muy completa
+    - Muy buena idea lo de especificar semilla aleatoria, permitiendo
+      aleatoriedad y reproducibilidad 🙃
+
+** Tapia Angel
+- Archivos :: [[./TapiaAngel/Tarea2.py][Tarea2.py]]
+- Calificación :: 10
+  - Tabla de resultados :: ✅ Sí (FCFS, SPN, RR1, RR4)
+  - Esquema visual :: ✅ Sí (secuencia detallada)
+  - Algoritmo de colas múltiples :: ✅ Sí (FB)
+  - Comentarios ::
+    - Muy buena implementación
+    - Código bien comentado y estructurado
+
+** Tejeda, Abraham
+- Documentación :: [[./Tejeda Abraham/Esquema Visual.pdf][Esquema Visual.pdf]]
+- Archivos :: [[./Tejeda Abraham/ListaProcesos.py][ListaProcesos.py]]
+- Calificación :: 10
+  - Tabla de resultados :: ✅ Sí (FCFS, RR1, RR4, SPN)
+  - Esquema visual :: ✅ Sí (secuencia visual)
+  - Algoritmo de colas múltiples :: ✅ Sí (FB)
+  - Comentarios ::
+    - Implementación completa con todos los algoritmos solicitados.
+    - Código funcional y bien organizado.
