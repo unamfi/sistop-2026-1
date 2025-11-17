@@ -57,3 +57,5 @@ class DirectoryEntry:
   def is_empty(self):
     return self.name == EMPTY_NAME
   
+  def get_name_str(self):
+    return self.name.rstrip(b'\x00').decode('ascii').rstrip()

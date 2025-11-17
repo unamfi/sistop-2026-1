@@ -1,3 +1,4 @@
+import os
 from . import utils as utils
 from .directory_entry import DirectoryEntry
 
@@ -63,5 +64,27 @@ class FileSystem:
     for entry in self.entries:
       if not entry.is_empty():
         print(entry)
+        
+  def find_entry(self, fname):
+    name_b = fname.encode('ascii')[:14].ljust(14, b'\x00')
+    for entry in self.entries:
+      if entry.get_name_str() == fname:
+        return entry
+      
+    return None
+  
+  def read_file_to_host(self, fname, outpath):
+    entry = self.find_entry(fname)
+    if not entry:
+      raise FileNotFoundError(fname)
+    
+    start = entry.start_cluster * self.cluster_size
+    size = entry.size
+    with open(self.img_path, 'rb') as file_system:
+      file_system.seek(start)
+      data = file_system.read(size)
+      
+      with open(outpath, 'wb') as out_dir:
+        out_dir.write(data)
       
   
