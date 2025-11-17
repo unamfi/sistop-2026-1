@@ -48,6 +48,15 @@ class DirectoryEntry:
     
     return bytes(info_bytes)
   
+  def init_entry(self, name, start_cluster, size):
+    self.type = TYPE_FILE
+    self.name = name.encode('ascii')[:14].ljust(14, b'\x00')
+    self.start_cluster = start_cluster
+    self.size = size
+    timestamp = utils.get_now_timestamp().encode('ascii')
+    self.created = timestamp
+    self.modified = timestamp
+  
   def __str__(self):
     name_str = self.name if isinstance(self.name, str) else self.name.decode('ascii')
     created_str = self.created if isinstance(self.created, str) else self.created.decode('ascii')

@@ -66,7 +66,6 @@ class FileSystem:
         print(entry)
         
   def find_entry(self, fname):
-    name_b = fname.encode('ascii')[:14].ljust(14, b'\x00')
     for entry in self.entries:
       if entry.get_name_str() == fname:
         return entry
@@ -86,5 +85,83 @@ class FileSystem:
       
       with open(outpath, 'wb') as out_dir:
         out_dir.write(data)
+        
+  def _occupied_cluster_ranges(self):
+    ranges = []
+    for entry in self.entries:
+      if entry.is_empty() or entry.size == 0:
+        continue
       
+      clusters_occupied = (entry.size + self.cluster_size - 1) // self.cluster_size
+      ranges.append((entry.start_cluster, entry.start_cluster + clusters_occupied))
+      
+    ranges.sort()
+    return ranges
+        
+  def _find_free_contiguous(self, clusters_needed):
+    occupied = self._occupied_cluster_ranges()
+    cur = self.data_start_cluster
+    end = self.total_clusters
+    
+    merged = []
+    for cluster_start, cluster_end in occupied:
+      if cluster_end <= cur:
+        continue
+      if not merged:
+        merged.append([cluster_start, cluster_end])
+      else:
+        if cluster_start <= merged[-1][1]:
+          merged[-1][1] = max(merged[-1][1], cluster_end)
+        else:
+          merged.append([cluster_start, cluster_end])
+          
+    for cluster_start, cluster_end in merged:
+      if cluster_start - cur >= clusters_needed:
+        return cur
+      cur = max(cur, cluster_end)
+      
+    if end - cur >= clusters_needed:
+      return cur
+    
+    return None
+  
+  def _update_directory(self):
+    with open(self.img_path, 'r+b') as file_system:
+      file_system.seek(self.directory_offset)
+      out = bytearray()
+      for entry in self.entries:
+        out.extend(entry.as_bytes())
+        
+      out = out[:self.directory_size].ljust(self.directory_size, b'\x00')
+      file_system.write(out)
+        
+  def write_file_from_host(self, fpath, remote_name = None):  
+    with open(fpath, 'rb') as file:
+      data = file.read()
+      
+    size = len(data)
+    clusters_needed = (size + self.cluster_size - 1) // self.cluster_size
+    
+    free_idx = None
+    for idx, entry in enumerate(self.entries):
+      if entry.is_empty():
+        free_idx = idx
+        break
+      
+    if not free_idx:
+      raise RuntimeError("No hay entradas libres en el directorio")
+    
+    start_cluster = self._find_free_contiguous(clusters_needed)
+    if not start_cluster:
+      raise RuntimeError("No hay espacio contiguo suficiente para copiar el archivo")
+    
+    with open(self.img_path, 'r+b') as file_system:
+      file_system.seek(start_cluster * self.cluster_size)
+      file_system.write(data)
+      
+    entry = self.entries[free_idx]
+    new_name = remote_name if remote_name else os.path.basename(fpath)
+    entry.init_entry(new_name, start_cluster, size)
+    
+    self._update_directory()
   
