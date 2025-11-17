@@ -165,3 +165,10 @@ class FileSystem:
     
     self._update_directory()
   
+  def delete_file(self, fname):
+    entry = self.find_entry(fname)
+    if not entry:
+      raise FileNotFoundError(fname)
+    
+    entry.delete_entry()
+    self._update_directory()

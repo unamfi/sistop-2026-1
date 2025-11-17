@@ -56,6 +56,14 @@ class DirectoryEntry:
     timestamp = utils.get_now_timestamp().encode('ascii')
     self.created = timestamp
     self.modified = timestamp
+    
+  def delete_entry(self):
+    self.type = TYPE_FREE
+    self.name = EMPTY_NAME
+    self.start_cluster = 0
+    self.size = 0
+    self.created = b'0' * 14
+    self.modified = b'0' * 14
   
   def __str__(self):
     name_str = self.name if isinstance(self.name, str) else self.name.decode('ascii')
