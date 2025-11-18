@@ -1,0 +1,52 @@
+#+title: Evaluación de la exposición
+#+author: Gunnar Wolf
+
+* Privacidad y seguridad del sistema operativo: un análisis de Linux y XNU en dispositivos móviles
+
+- Tema presentado por :: Ariana Castañeda
+- Calificación global :: 7.26
+
+|------------------------+------+--------------------+------+---------|
+| Evaluación  compañeros | Peso | Evaluación docente | Peso | *Total* |
+|------------------------+------+--------------------+------+---------|
+|                   8.13 |  0.3 |               6.88 |  0.7 |    7.26 |
+|------------------------+------+--------------------+------+---------|
+#+TBLFM: @2$5=$1*$2+$3*$4;f-2
+
+* Evaluación grupal
+
+|              | 1 | 2 | 3 | 4 | 5 | Total |
+|--------------+---+---+---+---+---+-------|
+| Originalidad | 0 | 0 | 1 | 0 | 2 |  8.67 |
+| Nivel        | 0 | 1 | 0 | 0 | 2 |  8.00 |
+| Relevancia   | 1 | 0 | 0 | 0 | 2 |  7.33 |
+| Claridad     | 0 | 1 | 0 | 0 | 2 |  8.00 |
+| Presencia    | 0 | 0 | 1 | 0 | 2 |  8.67 |
+|--------------+---+---+---+---+---+-------|
+|              |   |   |   |   |   |  8.13 |
+#+TBLFM: @2$7..@6$7=10 * (0.2*$2 + 0.4*$3 + 0.6*$4 + 0.8*$5 + $6 ) / vsum($2..$6); f-2::@7$7=vmean(@2$7..@6$7); f-2
+
+** Comentarios de los compañeros
+- Fue buena presentación, muy interesante
+
+* Evaluación por parte del docente
+
+| *Aspecto*              | *Peso* | *Evaluación* | *Puntos* |
+|------------------------+--------+--------------+----------|
+| Originalidad del tema  |    0.1 |          7.5 |     0.75 |
+| Material desarrollado  |    0.2 |           10 |       2. |
+| Contenido              |    0.2 |            5 |       1. |
+| Fuentes bibliográficas |    0.1 |          7.5 |     0.75 |
+| Uso del tiempo         |    0.1 |            5 |      0.5 |
+| Dominio del tema       |   0.15 |            5 |     0.75 |
+| Presencia              |   0.15 |          7.5 |    1.125 |
+|------------------------+--------+--------------+----------|
+| *Global*               |        |              |     6.88 |
+#+TBLFM: @<<$4..@>>$4=$2*$3::$4=vsum(@<<..@>>);f-2
+
+** Comentarios
+- Mantuviste el nivel en descriptivo, no entraste a detalle: Te mantuviste
+  en el /qué/, apenas apuntando hacia el /cómo/. Mencionas el nombre de
+  varias soluciones tecnológicas, pero no profundizas en ninguna de ellas
+  - Hay varios errores de comprensión, por ejemplo, en cuándo entra en
+    juego ASLR o cuáles son los límites del TPM/TWE/Secure Enclave.

@@ -1,0 +1,46 @@
+Hernández Irineo; Jorge Manuel
+Zamora Ayala; Antonio Manuel
+
+Problema a resolver, lenguaje y entorno.
+El siguiente programa en Python tiene como propósito simular distintos mecanismos de planificación de procesos, específicamente FCFS (First Come, First Served), 
+RR (Round Robin) y SPN (Shortest Process Next). Estos algoritmos permiten comparar el rendimiento de diferentes estrategias de asignación de CPU a procesos, 
+tomando en cuenta métricas como el tiempo de retorno promedio (T), el tiempo de espera promedio (E) y el índice de penalización (P). Además, 
+el programa genera de forma aleatoria las cargas de trabajo y muestra un esquema visual que representa el orden de ejecución de los procesos, 
+permitiendo observar cómo varía el comportamiento de cada algoritmo en distintas condiciones.
+
+Descripción del código.
+La primera parte del programa define la función generar_procesos(), encargada de crear un conjunto de procesos simulados. 
+Cada proceso tiene un nombre (de la A a la E), un tiempo de llegada y una duración o ráfaga de CPU. Para representar situaciones más realistas, 
+los tiempos de llegada se generan de manera secuencial, pero con huecos aleatorios entre ellos. Esto significa que en ciertos momentos puede no 
+haber ningún proceso disponible, obligando al planificador a esperar antes de ejecutar el siguiente. Con esto se garantiza que el código respete 
+una de las condiciones más importantes del problema: no ejecutar procesos que aún no han llegado.
+
+Posteriormente se implementa el algoritmo FCFS, el más sencillo de los tres. En este esquema, los procesos se ejecutan en el orden en que llegan, 
+sin interrupciones. En la función fcfs(), se recorre la lista de procesos y, si el reloj actual es menor al tiempo de llegada de un proceso, 
+el CPU espera hasta ese momento. Después, se calcula el tiempo de espera (la diferencia entre el momento en que el proceso comienza y su llegada) 
+y el tiempo de retorno (desde su llegada hasta su finalización). Cada proceso se ejecuta completamente antes de pasar al siguiente, y la visualización 
+se genera repitiendo la letra del proceso tantas veces como su duración. Este algoritmo es simple y justo, pero tiende a penalizar a los procesos cortos 
+si llegan después de uno muy largo.
+
+El segundo algoritmo es Round Robin (RR), implementado en la función rr(). Este método utiliza un quantum, es decir, una porción fija de tiempo que cada proceso
+puede usar antes de ser interrumpido. Si un proceso no termina durante su turno, se reinserta en la cola para esperar su siguiente oportunidad. El código maneja 
+dos variantes: una con quantum 1 (RR1) y otra con quantum 4 (RR4), lo que permite observar cómo un cambio en este parámetro afecta los resultados.
+Durante la ejecución, los procesos que llegan mientras otro está siendo atendido se agregan dinámicamente a la cola, y los procesos que no terminan son colocados 
+al final de la misma para respetar el orden de llegada. El esquema visual resultante suele alternar las letras de los procesos, mostrando la rotación del CPU entre 
+ellos.
+
+En Round Robin, puede haber múltiples ejecuciones válidas dependiendo del orden en que se gestionen los procesos que comparten el mismo tiempo de llegada. 
+Por ejemplo, si los procesos A y B llegan al mismo tiempo, la secuencia de ejecución podría ser ABABCABC... o ABACBACB..., y ambas cumplirían con el planteamiento formal del algoritmo.
+En este programa, se decidió mantener una política FIFO (First In, First Out) dentro de la cola de listos: cada proceso que no termina es reinsertado al final, 
+respetando su orden de llegada inicial. Esto produce ejecuciones más predecibles y fáciles de seguir visualmente, con secuencias del tipo ABABCABC.
+
+Finalmente, el programa implementa el algoritmo SPN (Shortest Process Next) en la función spn(). En este método, cuando el CPU está libre, selecciona de entre los 
+procesos que ya llegaron aquel con la menor duración pendiente. Esto reduce el tiempo promedio de espera, aunque puede generar problemas de inanición si procesos 
+cortos siguen llegando mientras uno largo espera. En el código, los procesos disponibles se almacenan en una lista de espera que se ordena según la duración de cada 
+proceso. Una vez elegido el más corto, se ejecuta completamente, se actualiza el tiempo global y se agrega a la lista de completados. Al finalizar, se calculan los 
+tiempos promedio de retorno y espera, al igual que en los algoritmos anteriores.
+
+La sección final del programa ejecuta las pruebas principales. Se generan nuevas cargas aleatorias para cada ronda y se imprimen los resultados obtenidos con cada uno
+ de los tres algoritmos. Además, se muestra el esquema visual de ejecución, que funciona como una representación textual de la línea de tiempo del CPU, donde cada 
+letra indica qué proceso estuvo en ejecución en cada instante. Este formato facilita la comparación visual y ayuda a identificar patrones característicos, 
+como las interrupciones frecuentes en Round Robin o las ejecuciones continuas en FCFS y SPN.
