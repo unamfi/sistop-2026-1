@@ -1,6 +1,8 @@
 import struct
-from threading import RLock
+from threading import RLock, Condition
 import math
+import os
+from datetime import datetime
 
 # ============================================================================
 # CAPA DE ACCESO AL DISCO
@@ -215,3 +217,177 @@ class Directorio:
         entrada.tipo = '-'  # Marcar como vacío con '-'
         entrada.nombre = '...............'
         self.actualizar_entrada(indice, entrada)
+
+# ============================================================================
+# GESTOR DE ESPACIO EN DISCO
+# ============================================================================
+
+class GestorEspacio:
+    def __init__(self, disco, total_clusters):
+        self.disco = disco
+        self.total_clusters = total_clusters  # Guardamos el valor real del disco
+        self.lock = RLock()
+        
+    def buscar_espacio_contiguo(self, num_clusters):
+        """Busca espacio contiguo para num_clusters"""
+        with self.lock:
+            inicio = DiscoVirtual.DIR_START_CLUSTER + DiscoVirtual.DIR_CLUSTERS
+            total = self.total_clusters 
+            
+            clusters_libres_consecutivos = 0
+            cluster_inicial = None
+            
+            for c in range(inicio, total):
+                data = self.disco.leer_cluster(c)
+                if all(b == 0 for b in data):
+                    if cluster_inicial is None:
+                        cluster_inicial = c
+                    clusters_libres_consecutivos += 1
+                    
+                    if clusters_libres_consecutivos == num_clusters:
+                        return cluster_inicial
+                else:
+                    clusters_libres_consecutivos = 0
+                    cluster_inicial = None
+                    
+            return None
+    
+    def liberar_clusters(self, cluster_inicial, num_clusters):
+        """Libera clusters escribiendo ceros"""
+        with self.lock:
+            for i in range(num_clusters):
+                self.disco.escribir_cluster(cluster_inicial + i, b'\x00' * DiscoVirtual.CLUSTER_SIZE)
+    
+    def obtener_espacio_disponible(self):
+        """Retorna información de espacio disponible"""
+        with self.lock:
+            inicio = DiscoVirtual.DIR_START_CLUSTER + DiscoVirtual.DIR_CLUSTERS
+            total = self.total_clusters
+            clusters_libres = 0
+            bytes_libres = 0 
+            
+            for c in range(inicio, total):
+                data = self.disco.leer_cluster(c)
+                if all(b == 0 for b in data):
+                    clusters_libres += 1
+                    bytes_libres += DiscoVirtual.CLUSTER_SIZE
+            
+            return {
+                'clusters_libres': clusters_libres,
+                'bytes_libres': bytes_libres,
+                'clusters_totales': total - inicio,
+                'bytes_totales': (total - inicio) * DiscoVirtual.CLUSTER_SIZE
+            }
+
+# ============================================================================
+# OPERACIONES DEL SISTEMA DE ARCHIVOS
+# ============================================================================
+
+class FileSystemOps:
+    def __init__(self, disco_path):
+        self.disco = DiscoVirtual(disco_path)
+        self.sb = Superbloque(self.disco)
+        self.directorio = Directorio(self.disco)
+        self.gestor_espacio = GestorEspacio(self.disco, self.sb.total_clusters)
+        self.lock_ops = RLock()
+        self.cambio_notificacion = Condition()
+
+    def listar(self):
+        with self.lock_ops:
+            self.directorio.recargar()
+            return self.directorio.listar_archivos()
+
+    def extraer_archivo(self, nombre_fs, ruta_destino):
+        """Extrae archivo del FS a la computadora"""
+        with self.lock_ops:
+            idx, entrada = self.directorio.buscar_por_nombre(nombre_fs)
+
+            if entrada is None:
+                raise FileNotFoundError(f"Archivo '{nombre_fs}' no encontrado")
+
+            clusters_necesarios = math.ceil(entrada.tamano / DiscoVirtual.CLUSTER_SIZE)
+            
+            data = self.disco.leer_multiples_clusters(
+                entrada.cluster_inicial, 
+                clusters_necesarios
+            )
+            
+            data = data[:entrada.tamano]
+
+            if os.path.isdir(ruta_destino):
+                ruta_destino = os.path.join(ruta_destino, nombre_fs)
+
+            with open(ruta_destino, 'wb') as f:
+                f.write(data)
+
+            return ruta_destino
+
+    def agregar_archivo(self, ruta_origen, nombre_fs=None):
+        """Agrega archivo al FS"""
+        with self.lock_ops:
+            if nombre_fs is None:
+                nombre_fs = os.path.basename(ruta_origen)
+            
+            if len(nombre_fs) > 15:
+                raise ValueError("Nombre demasiado largo (máx 15 caracteres)")
+
+            idx_existente, _ = self.directorio.buscar_por_nombre(nombre_fs)
+            if idx_existente is not None:
+                raise ValueError(f"Ya existe un archivo con el nombre '{nombre_fs}'")
+
+            with open(ruta_origen, 'rb') as f:
+                contenido = f.read()
+
+            tamano = len(contenido)
+            clusters_necesarios = math.ceil(tamano / DiscoVirtual.CLUSTER_SIZE)
+
+            espacio = self.gestor_espacio.obtener_espacio_disponible()
+            if espacio['clusters_libres'] < clusters_necesarios:
+                raise ValueError(f"Espacio insuficiente")
+
+            idx_libre = self.directorio.encontrar_entrada_libre()
+            if idx_libre is None:
+                raise ValueError("Directorio lleno")
+
+            cluster_inicial = self.gestor_espacio.buscar_espacio_contiguo(clusters_necesarios)
+            if cluster_inicial is None:
+                raise ValueError(f"No hay espacio contiguo suficiente")
+
+            self.disco.escribir_multiples_clusters(cluster_inicial, contenido)
+
+            nueva_entrada = EntradaDirectorio()
+            nueva_entrada.tipo = '.'
+            nueva_entrada.nombre = nombre_fs
+            nueva_entrada.cluster_inicial = cluster_inicial
+            nueva_entrada.tamano = tamano
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            nueva_entrada.fecha_creacion = timestamp
+            nueva_entrada.fecha_modificacion = timestamp
+
+            self.directorio.actualizar_entrada(idx_libre, nueva_entrada)
+            
+            with self.cambio_notificacion:
+                self.cambio_notificacion.notify_all()
+
+    def eliminar_archivo(self, nombre_fs):
+        """Elimina archivo del FS"""
+        with self.lock_ops:
+            idx, entrada = self.directorio.buscar_por_nombre(nombre_fs)
+
+            if entrada is None:
+                raise FileNotFoundError(f"Archivo '{nombre_fs}' no encontrado")
+
+            clusters_a_liberar = math.ceil(entrada.tamano / DiscoVirtual.CLUSTER_SIZE)
+            
+            self.gestor_espacio.liberar_clusters(entrada.cluster_inicial, clusters_a_liberar)
+
+            self.directorio.marcar_como_libre(idx)
+            
+            with self.cambio_notificacion:
+                self.cambio_notificacion.notify_all()
+
+    def obtener_info_superbloque(self):
+        return self.sb.obtener_info()
+    
+    def obtener_info_espacio(self):
+        return self.gestor_espacio.obtener_espacio_disponible()
