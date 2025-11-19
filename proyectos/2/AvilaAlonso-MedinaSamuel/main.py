@@ -1,8 +1,10 @@
 import struct
-from threading import RLock, Condition
+from threading import Thread, RLock, Condition, Event
 import math
 import os
 from datetime import datetime
+import tkinter as tk
+from tkinter import ttk, filedialog, messagebox, simpledialog
 
 # ============================================================================
 # CAPA DE ACCESO AL DISCO
@@ -391,3 +393,349 @@ class FileSystemOps:
     
     def obtener_info_espacio(self):
         return self.gestor_espacio.obtener_espacio_disponible()
+      
+# ============================================================================
+# OPERACIONES CONCURRENTES
+# ============================================================================
+
+class OperacionConcurrente(Thread):
+    def __init__(self, operacion, args, callback_exito=None, callback_error=None):
+        super().__init__()
+        self.operacion = operacion
+        self.args = args
+        self.callback_exito = callback_exito
+        self.callback_error = callback_error
+        self.daemon = True
+        
+    def run(self):
+        try:
+            resultado = self.operacion(*self.args)
+            if self.callback_exito:
+                self.callback_exito(resultado)
+        except Exception as e:
+            if self.callback_error:
+                self.callback_error(str(e))
+
+# ============================================================================
+# MONITOR EN SEGUNDO PLANO
+# ============================================================================
+
+class MonitorIntegridad(Thread):
+    def __init__(self, fs_ops, gui_callback=None, intervalo=30):
+        super().__init__(daemon=True)
+        self.fs_ops = fs_ops
+        self.gui_callback = gui_callback
+        self.intervalo = intervalo
+        self.activo = True
+        self.evento_parada = Event()
+
+    def run(self):
+        while self.activo:
+            if self.evento_parada.wait(self.intervalo):
+                break
+                
+            try:
+                _ = Superbloque(self.fs_ops.disco)
+                info_espacio = self.fs_ops.obtener_info_espacio()
+                
+                if self.gui_callback:
+                    self.gui_callback(info_espacio)
+                    
+            except Exception as e:
+                if self.gui_callback:
+                    self.gui_callback({'error': str(e)})
+
+    def detener(self):
+        self.activo = False
+        self.evento_parada.set()
+
+# ============================================================================
+# INTERFAZ GRÁFICA
+# ============================================================================
+
+class AplicacionFS:
+    def __init__(self, root, fs_ops):
+        self.root = root
+        self.fs = fs_ops
+        self.monitor = MonitorIntegridad(fs_ops, self.actualizar_info_espacio)
+        
+        # Hilo para actualización automática
+        self.hilo_actualizacion = Thread(target=self._monitor_cambios, daemon=True)
+
+        self.root.title("FiUnamFS Manager")
+        self.root.geometry("900x600")
+
+        self._crear_interfaz()
+        self.monitor.start()
+        self.hilo_actualizacion.start()
+        
+        # Actualizar lista al inicio
+        self.root.after(100, self.actualizar_lista)
+
+    def _crear_interfaz(self):
+        # Frame para información del superbloque
+        frame_info = tk.LabelFrame(self.root, text="Información del Sistema", padx=10, pady=5)
+        frame_info.pack(fill=tk.X, padx=10, pady=5)
+        
+        self.label_info = tk.Label(frame_info, justify=tk.LEFT, font=('Courier', 10))
+        self.label_info.pack()
+
+        # Frame para botones de operación 
+        frame_botones = tk.Frame(self.root, pady=10)
+        frame_botones.pack(fill=tk.X)
+
+        tk.Button(frame_botones, text="Extraer Archivo", command=self.extraer_multiple, width=15).pack(side=tk.LEFT, padx=5)
+        tk.Button(frame_botones, text="Agregar Archivo", command=self.agregar_multiple, width=15).pack(side=tk.LEFT, padx=5)
+        tk.Button(frame_botones, text="Eliminar Archivo", command=self.eliminar_multiple, width=15).pack(side=tk.LEFT, padx=5)
+
+        # Frame para la lista de archivos
+        frame_lista = tk.Frame(self.root)
+        frame_lista.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+
+        # Treeview solo con archivos válidos
+        cols = ("Nombre", "Tamaño", "Cluster Inicial", "Creación", "Modificación")
+        self.tree = ttk.Treeview(frame_lista, columns=cols, show='headings', height=15, selectmode='extended')
+
+        self.tree.heading("Nombre", text="Nombre")
+        self.tree.heading("Tamaño", text="Tamaño (bytes)")
+        self.tree.heading("Cluster Inicial", text="Cluster Inicial")
+        self.tree.heading("Creación", text="Creación")
+        self.tree.heading("Modificación", text="Modificación")
+
+        self.tree.column("Nombre", width=180)
+        self.tree.column("Tamaño", width=120)
+        self.tree.column("Cluster Inicial", width=100)
+        self.tree.column("Creación", width=150)
+        self.tree.column("Modificación", width=150)
+
+        scroll_y = ttk.Scrollbar(frame_lista, orient=tk.VERTICAL, command=self.tree.yview)
+        self.tree.configure(yscrollcommand=scroll_y.set)
+
+        self.tree.grid(row=0, column=0, sticky='nsew')
+        scroll_y.grid(row=0, column=1, sticky='ns')
+
+        frame_lista.grid_rowconfigure(0, weight=1)
+        frame_lista.grid_columnconfigure(0, weight=1)
+
+        self.status_bar = tk.Label(self.root, text="Listo", bd=1, relief=tk.SUNKEN, anchor=tk.W)
+        self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+
+    def _monitor_cambios(self):
+        """Hilo para actualizar la GUI cuando hay cambios"""
+        while True:
+            with self.fs.cambio_notificacion:
+                self.fs.cambio_notificacion.wait()
+                self.root.after(100, self.actualizar_lista)
+
+    def actualizar_lista(self):
+        """Actualiza la lista mostrando SOLO archivos válidos"""
+        # Limpiar lista
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+        # Obtener y mostrar solo archivos válidos
+        archivos = self.fs.listar()
+        
+        for idx, entrada in archivos:
+            # Solo mostramos archivos válidos, NO las entradas vacías
+            tamano_fmt = f"{entrada.tamano}"
+            
+            # Mostrar fechas en formato AAAAMMDDHHMMSS como están en el disco
+            self.tree.insert('', tk.END, values=(
+                entrada.nombre,
+                tamano_fmt,
+                entrada.cluster_inicial,
+                entrada.fecha_creacion,
+                entrada.fecha_modificacion
+            ))
+        
+        # Actualizar información del sistema
+        self.actualizar_info_sistema()
+
+    def actualizar_info_sistema(self):
+        """Actualiza información del superbloque y espacio"""
+        info = self.fs.obtener_info_superbloque()
+        espacio = self.fs.obtener_info_espacio()
+        
+        texto = (
+            f"Nombre: {info['Nombre']} | "
+            f"Versión: {info['Versión']} | "
+            f"Etiqueta: {info['Etiqueta de Volumen']}\n"
+            f"Tamaño Cluster: {info['Tamaño de Cluster']} | "
+            f"Clusters Dir: {info['Clusters de Directorio']} | "
+            f"Espacio Libre: {espacio['bytes_libres']//1024} KB / {espacio['bytes_totales']//1024} KB"
+        )
+        self.label_info.config(text=texto)
+
+    def actualizar_info_espacio(self, info_espacio):
+        """Actualiza información de espacio en la barra de estado"""
+        if 'error' in info_espacio:
+            self.status_bar.config(text=f"Error: {info_espacio['error']}")
+        else:
+            kb_libres = info_espacio['bytes_libres'] // 1024
+            kb_totales = info_espacio['bytes_totales'] // 1024
+            porcentaje = (info_espacio['bytes_libres'] / info_espacio['bytes_totales']) * 100
+            self.status_bar.config(
+                text=f"Espacio libre: {kb_libres} KB / {kb_totales} KB ({porcentaje:.1f}%)"
+            )
+
+    def extraer_multiple(self):
+        """Extrae múltiples archivos seleccionados"""
+        seleccion = self.tree.selection()
+        if not seleccion:
+            messagebox.showwarning("Advertencia", "Seleccione archivo(s) para copiar a PC")
+            return
+
+        destino = filedialog.askdirectory(title="Seleccionar carpeta de destino")
+        if not destino:
+            return
+
+        archivos_extraidos = []
+        errores = []
+
+        for item in seleccion:
+            valores = self.tree.item(item)['values']
+            nombre = valores[0]
+            
+            def callback_exito(resultado):
+                archivos_extraidos.append(resultado)
+                
+            def callback_error(error):
+                errores.append(f"{nombre}: {error}")
+            
+            op = OperacionConcurrente(
+                self.fs.extraer_archivo,
+                (nombre, destino),
+                callback_exito,
+                callback_error
+            )
+            op.start()
+            op.join()
+
+        if archivos_extraidos:
+            messagebox.showinfo("Éxito", f"Archivos copiados: {len(archivos_extraidos)}")
+        
+        if errores:
+            messagebox.showerror("Errores", "\n".join(errores))
+
+    def agregar_multiple(self):
+        """Agrega múltiples archivos"""
+        archivos = filedialog.askopenfilenames(title="Seleccionar archivo(s)")
+        if not archivos:
+            return
+
+        agregados = []
+        errores = []
+        
+        for archivo in archivos:
+            nombre_base = os.path.basename(archivo)
+            
+            if len(nombre_base) > 15:
+                nombre = simpledialog.askstring(
+                    "Nombre largo",
+                    f"El nombre '{nombre_base}' es muy largo.\nIngrese un nombre (máx 15 caracteres):",
+                    initialvalue=nombre_base[:15]
+                )
+                if not nombre:
+                    continue
+            else:
+                nombre = nombre_base
+
+            def callback_exito(resultado):
+                agregados.append(nombre)
+                
+            def callback_error(error):
+                errores.append(f"{nombre}: {error}")
+
+            op = OperacionConcurrente(
+                self.fs.agregar_archivo,
+                (archivo, nombre),
+                callback_exito,
+                callback_error
+            )
+            op.start()
+            op.join()
+
+        self.actualizar_lista()
+        
+        if agregados:
+            messagebox.showinfo("Éxito", f"Archivos agregados: {len(agregados)}")
+        
+        if errores:
+            messagebox.showerror("Errores", "\n".join(errores[:5]))
+
+    def eliminar_multiple(self):
+        """Elimina múltiples archivos seleccionados"""
+        seleccion = self.tree.selection()
+        if not seleccion:
+            messagebox.showwarning("Advertencia", "Seleccione archivo(s) para eliminar")
+            return
+
+        archivos_a_eliminar = []
+        for item in seleccion:
+            valores = self.tree.item(item)['values']
+            nombre = valores[0]
+            archivos_a_eliminar.append(nombre)
+
+        if not archivos_a_eliminar:
+            return
+
+        msg = f"¿Eliminar {len(archivos_a_eliminar)} archivo(s)?"
+        
+        if not messagebox.askyesno("Confirmar eliminación", msg):
+            return
+
+        eliminados = []
+        errores = []
+
+        for nombre in archivos_a_eliminar:
+            def callback_exito(resultado):
+                eliminados.append(nombre)
+                
+            def callback_error(error):
+                errores.append(f"{nombre}: {error}")
+
+            op = OperacionConcurrente(
+                self.fs.eliminar_archivo,
+                (nombre,),
+                callback_exito,
+                callback_error
+            )
+            op.start()
+            op.join()
+
+        self.actualizar_lista()
+        
+        if eliminados:
+            messagebox.showinfo("Éxito", f"Archivos eliminados: {len(eliminados)}")
+        
+        if errores:
+            messagebox.showerror("Errores", "\n".join(errores))
+
+# ============================================================================
+# PUNTO DE ENTRADA
+# ============================================================================
+
+def main():
+    root = tk.Tk()
+    root.withdraw()
+
+    archivo_fs = filedialog.askopenfilename(
+        title="Seleccionar archivo FiUnamFS",
+        filetypes=[("Archivos IMG", "*.img"), ("Todos los archivos", "*.*")]
+    )
+
+    if not archivo_fs:
+        return
+
+    try:
+        fs_ops = FileSystemOps(archivo_fs)
+        root.deiconify()
+        app = AplicacionFS(root, fs_ops)
+        root.protocol("WM_DELETE_WINDOW", lambda: (app.monitor.detener(), root.destroy()))
+        root.mainloop()
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo cargar el sistema de archivos:\n{str(e)}")
+
+if __name__ == "__main__":
+    main()
