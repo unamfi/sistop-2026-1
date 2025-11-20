@@ -1,5 +1,229 @@
 import struct
 import threading
+import os
+
+class Mover:
+    def __init__(self, file_system):
+        self.file_system = file_system
+        self.input_dir = "input_files"
+        self.output_dir = "output_files"
+        self._create_directories()
+
+    def delete_file_from_fs(self, filename):
+        entry = self.file_system.__find_entry__(filename)
+        if not entry:
+            print(f"Error: File '{filename}' not found in FiUnamFS")
+            return False
+
+        try:
+            dir_entry_position = self.file_system.dir_start + (entry['dir_index'] * 64)
+            
+            self.file_system.sys_dump.seek(dir_entry_position)
+            current_entry = self.file_system.sys_dump.read(64)
+            
+            deleted_entry = bytearray(64)
+            deleted_entry[0:1] = '/'  
+            deleted_entry[1:15] = '.' * 14
+            
+            self.file_system.sys_dump.seek(dir_entry_position)
+            self.file_system.sys_dump.write(deleted_entry)
+            
+            self.file_system.sys_dump.flush()
+            
+            self.file_system.__read_dir__()
+            
+            print(f"Successfully deleted '{filename}' from FiUnamFS")
+            print(f"  Freed {entry['size']} bytes")
+            print(f"  Freed {entry['start']} cluster(s)")
+            print(f"  Directory entry {entry['dir_index']} marked as available")
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error deleting '{filename}' from FiUnamFS: {e}")
+            return False
+
+    def _create_directories(self):
+        os.makedirs(self.input_dir, exist_ok=True)
+        os.makedirs(self.output_dir, exist_ok=True)
+
+    def _find_free_clusters(self, clusters_needed):
+        used_clusters = set()
+        for entry in self.file_system.directory_entries:
+            file_clusters = (entry['size'] + self.file_system.cluster_size - 1) // self.file_system.cluster_size
+            for i in range(file_clusters):
+                used_clusters.add(entry['start'] + i)
+        
+        free_clusters = []
+        for cluster_num in range(5, self.file_system.total_clusters):
+            if cluster_num not in used_clusters:
+                free_clusters.append(cluster_num)
+                if len(free_clusters) >= clusters_needed:
+                    return free_clusters[:clusters_needed]
+            else:
+                free_clusters = []
+        
+        return None
+
+    def _find_free_directory_entry(self):
+        self.file_system.sys_dump.seek(self.file_system.dir_start)
+        directory_data = self.file_system.sys_dump.read(self.file_system.dir_size)
+        
+        for i in range(0, self.file_system.dir_size, 64):
+            entry = directory_data[i:i+64]
+            file_type = entry[0:1]
+            name_raw = entry[1:15]
+            
+            if file_type == b'\x00' and all(b == 0 for b in name_raw):
+                return i 
+        
+        return None
+
+    def add_file_to_fs(self, filename):
+        input_path = os.path.join(self.input_dir, filename)
+        
+        if not os.path.exists(input_path):
+            print(f"Error: File '{filename}' not found in {self.input_dir}")
+            return False
+        
+        if self.file_system.__find_entry__(filename):
+            print(f"Error: File '{filename}' already exists in FiUnamFS")
+            return False
+        
+        file_size = os.path.getsize(input_path)
+        total_capacity = self.file_system.total_clusters * self.file_system.cluster_size
+        current_used = sum(entry['size'] for entry in self.file_system.directory_entries)
+        
+        if file_size > (total_capacity - current_used):
+            print(f"Error: File '{filename}' is too large ({file_size} bytes)")
+            print(f"Available space: {total_capacity - current_used} bytes")
+            return False
+        
+        clusters_needed = (file_size + self.file_system.cluster_size - 1) // self.file_system.cluster_size
+        
+        free_clusters = self._find_free_clusters(clusters_needed)
+        if not free_clusters:
+            print(f"Error: Not enough contiguous free clusters for '{filename}'")
+            print(f"Required: {clusters_needed} clusters")
+            return False
+        
+        dir_entry_offset = self._find_free_directory_entry()
+        if dir_entry_offset is None:
+            print("Error: No free directory entries available")
+            return False
+        
+        try:
+            with open(input_path, 'rb') as input_file:
+                file_data = input_file.read()
+            
+            start_cluster = free_clusters[0]
+            bytes_written = 0
+            
+            for i, cluster_num in enumerate(free_clusters):
+                cluster_position = cluster_num * self.file_system.cluster_size
+                self.file_system.sys_dump.seek(cluster_position)
+                
+                chunk_size = min(self.file_system.cluster_size, len(file_data) - bytes_written)
+                self.file_system.sys_dump.write(file_data[bytes_written:bytes_written + chunk_size])
+                bytes_written += chunk_size
+            
+            import datetime
+            now = datetime.datetime.now()
+            created_str = now.strftime("%Y%m%d%H%M%S")
+            
+            entry_data = bytearray(64)
+            
+            entry_data[0:1] = '-'
+            
+            name_bytes = filename[:14].ljust(14, '\x00').encode('ascii')
+            entry_data[1:15] = name_bytes
+            
+            entry_data[16:20] = struct.pack('<I', start_cluster)
+            
+            entry_data[20:24] = struct.pack('<I', file_size)
+            
+            entry_data[24:38] = created_str.encode('ascii')
+            entry_data[38:52] = created_str.encode('ascii')
+            
+            dir_entry_position = self.file_system.dir_start + dir_entry_offset
+            self.file_system.sys_dump.seek(dir_entry_position)
+            self.file_system.sys_dump.write(entry_data)
+            
+            self.file_system.sys_dump.flush()
+            self.file_system.__read_dir__()
+            
+            print(f"Successfully added '{filename}' to FiUnamFS")
+            print(f"  Size: {file_size} bytes")
+            print(f"  Clusters used: {clusters_needed} (starting at cluster {start_cluster})")
+            print(f"  Directory entry: {dir_entry_offset // 64}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error adding '{filename}' to FiUnamFS: {e}")
+            return False
+
+    def list_input_files(self):
+        if not os.path.exists(self.input_dir):
+            print("Input directory does not exist")
+            return []
+
+        files = os.listdir(self.input_dir)
+        if not files:
+            print("No files in input directory")
+            return []
+
+        print("Files in input directory:")
+        for file in files:
+            file_path = os.path.join(self.input_dir, file)
+            file_size = os.path.getsize(file_path)
+            print(f"  {file} ({file_size} bytes)")
+        
+        return files
+    def _create_directories(self):
+        os.makedirs(self.input_dir, exist_ok=True)
+        os.makedirs(self.output_dir, exist_ok=True)
+
+    def extract_file(self, filename):
+        entry = self.file_system.__find_entry__(filename)
+        if not entry:
+            print(f"Error: File '{filename}' not found in FiUnamFS")
+            return False
+
+        try:
+            cluster_size = self.file_system.cluster_size
+            file_position = entry['start'] * cluster_size
+            
+            self.file_system.sys_dump.seek(file_position)
+            file_data = self.file_system.sys_dump.read(entry['size'])
+            
+            output_path = os.path.join(self.output_dir, filename)
+            with open(output_path, 'wb') as output_file:
+                output_file.write(file_data)
+            
+            print(f"Successfully extracted '{filename}' to {output_path}")
+            return True
+            
+        except Exception as e:
+            print(f"Error extracting '{filename}': {e}")
+            return False
+
+    def extract_all_files(self):
+        if not self.file_system.directory_entries:
+            print("No files found in FiUnamFS")
+            return False
+
+        success_count = 0
+        total_files = len(self.file_system.directory_entries)
+        
+        print(f"Extracting {total_files} files from FiUnamFS...")
+        
+        for entry in self.file_system.directory_entries:
+            if self.extract_file(entry['name']):
+                success_count += 1
+        
+        print(f"Extraction complete: {success_count}/{total_files} files successfully extracted")
+        return success_count == total_files
 
 class File_system:
     def __init__(self, sys_dump):
@@ -228,21 +452,11 @@ class File:
 
 if __name__ == "__main__":
     file_system = File_system('fiunamfs.img')
-    
-    print(file_system)
-    print()
-    
-    file_system.get_file_system_info()
-    print()
-    
-    file_system.__list_Files__()
-    print()
-    
+    mover = Mover(file_system)
+
+    mover.add_file_to_fs('hola.txt')
+    mover.delete_file_from_fs('hola.txt')
     file_system.list_files_by_cluster()
-    print()
-    
-    for entry in file_system.directory_entries:
-        file_system.get_detailed_file_info(entry['name'])
-        print()
+    mover.extract_all_files()
     
     file_system.sys_dump.close()
