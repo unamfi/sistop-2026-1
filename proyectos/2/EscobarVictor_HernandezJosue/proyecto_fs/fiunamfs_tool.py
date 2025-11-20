@@ -11,6 +11,7 @@ import struct
 import os
 import argparse
 import sys
+import datetime
 
 SECTOR = 512
 DEFAULT_CLUSTER_SECTORS = 2  # por si superbloque marca cero
@@ -45,7 +46,6 @@ def read_directory(fd, sb):
 
     fd.seek(dir_offset)
     entries = []
-
     num_entries = dir_size // 64
 
     for i in range(num_entries):
@@ -53,27 +53,37 @@ def read_directory(fd, sb):
         if len(raw) < 64:
             break
 
-        tipo = raw[0]
-        name = raw[1:15].decode('ascii', errors='ignore').rstrip('\x00').rstrip('.')
-        start_cluster = struct.unpack_from('<I', raw, 16)[0]
-        size = struct.unpack_from('<I', raw, 20)[0]
-        ctime = raw[24:38].decode('ascii', errors='ignore').rstrip('\x00')
-        mtime = raw[38:52].decode('ascii', errors='ignore').rstrip('\x00')
+        tipo = chr(raw[0])
+        name = raw[1:15].decode("ascii", errors="ignore")
+        start_cluster = struct.unpack_from("<I", raw, 16)[0]
+        size = struct.unpack_from("<I", raw, 20)[0]
+        ctime = raw[24:38].decode("ascii", errors="ignore")
+        mtime = raw[38:52].decode("ascii", errors="ignore")
 
-        if not name or set(name) == {'.'}:
+        # Entrada vacía
+        if name.strip() == "" or name.startswith("........"):
+            entries.append({
+                "type": "-",
+                "name": "..............",
+                "start_cluster": 0,
+                "size": 0,
+                "ctime": "00000000000000",
+                "mtime": "00000000000000"
+            })
             continue
 
+        # Entrada válida
         entries.append({
-            'index': i,
-            'tipo': tipo,
-            'name': name,
-            'start_cluster': start_cluster,
-            'size': size,
-            'ctime': ctime,
-            'mtime': mtime
+            "type": tipo,
+            "name": name.strip(),
+            "start_cluster": start_cluster,
+            "size": size,
+            "ctime": ctime,
+            "mtime": mtime
         })
 
     return entries
+
 
 def extract_file(fd, sb, filename, dest):
     entries = read_directory(fd, sb)
@@ -138,6 +148,79 @@ def cmd_extract(img_path, filename, dest):
         print(f"Archivo extraído correctamente: {dest}")
         return 0
 
+def cmd_import(img_path, src_path, dest_name):
+    if not os.path.exists(img_path):
+        print("Imagen no encontrada:", img_path)
+        return 1
+
+    if not os.path.exists(src_path):
+        print("Archivo fuente no encontrado:", src_path)
+        return 2
+
+    # Normalizar nombre (máximo 14 chars)
+    dest_name = dest_name.strip()[:14]
+
+    with open(img_path, "r+b") as fd:
+        sb = read_superblock(fd)
+
+        if sb['magic'] != "FiUnamFS" or sb['version'] not in ["26-1", "26-2"]:
+            print("ERROR: versión no compatible:", sb['version'])
+            return 3
+
+        # Leer directorio
+        entries = read_directory(fd, sb)
+
+        # Buscar entrada libre
+        free_entry_index = None
+        for idx, e in enumerate(entries):
+            if e['type'] == '-' or e['name'] == "..............":
+                free_entry_index = idx
+                break
+
+        if free_entry_index is None:
+            print("No hay espacio en el directorio.")
+            return 4
+
+        # Leer archivo fuente
+        with open(src_path, "rb") as f:
+            data = f.read()
+
+        size = len(data)
+        cluster_size = sb['cluster_size']
+        needed_clusters = (size + cluster_size - 1) // cluster_size
+
+        # Buscar área libre (simplificación: cluster más alto vacío)
+        used = {e['start_cluster'] for e in entries if e['start_cluster'] > 0}
+        free_cluster = 1
+        while free_cluster in used:
+            free_cluster += 1
+
+        # Escribir datos en el área de datos
+        fd.seek(free_cluster * cluster_size)
+        fd.write(data)
+
+        # Crear entrada de directorio
+        dir_offset = cluster_size * 1
+        entry_offset = dir_offset + free_entry_index * 64
+
+        now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+
+        entry_bytes = bytearray(64)
+        entry_bytes[0] = ord('.')   # tipo archivo normal
+        entry_bytes[1:15] = dest_name.ljust(14).encode("ascii")
+        struct.pack_into("<I", entry_bytes, 16, free_cluster)
+        struct.pack_into("<I", entry_bytes, 20, size)
+        entry_bytes[24:38] = now.encode("ascii")
+        entry_bytes[38:52] = now.encode("ascii")
+
+        # Escribir la entrada en el directorio
+        fd.seek(entry_offset)
+        fd.write(entry_bytes)
+
+        print(f"Archivo '{src_path}' importado como '{dest_name}' en cluster {free_cluster}")
+        return 0
+
+
 
 def cmd_list(path):
     if not os.path.exists(path):
@@ -182,6 +265,37 @@ def cmd_list(path):
 
     return 0
 
+def cmd_delete(path, filename):
+    if not os.path.exists(path):
+        print("Imagen no encontrada:", path)
+        return 1
+
+    with open(path, "r+b") as fd:
+        sb = read_superblock(fd)
+        entries = read_directory(fd, sb)
+
+        # buscar archivo en directorio
+        pos = -1
+        for i, e in enumerate(entries):
+            if e["name"] == filename:
+                pos = i
+                break
+
+        if pos == -1:
+            print("No se encontró el archivo:", filename)
+            return 2
+
+        # calcular offset del directorio
+        cluster_size = sb["cluster_size"]
+        dir_offset = cluster_size * 1
+
+        # borrar la entrada (64 bytes de ceros)
+        fd.seek(dir_offset + pos * 64)
+        fd.write(b"\x00" * 64)
+
+        print(f"Archivo '{filename}' eliminado correctamente.")
+        return 0
+
 
 def main():
     parser = argparse.ArgumentParser(description="Herramienta FiUnamFS")
@@ -202,6 +316,21 @@ def main():
     p_extract.add_argument("--dest", required=True, help="Ruta destino para guardar el archivo")
 
     #
+    # --- SUBCOMANDO IMPORT ---
+    #
+    p_import = subparsers.add_parser("import", help="Copiar archivo desde tu PC hacia FiUnamFS")
+    p_import.add_argument("--img", default="fiunamfs.img", help="Imagen FiUnamFS")
+    p_import.add_argument("--src", required=True, help="Archivo que quieres copiar desde tu PC")
+    p_import.add_argument("--dest", required=True, help="Nombre dentro del FiUnamFS")
+
+    #
+    # --- SUBCOMANDO DELETE ---
+    #
+    p_delete = subparsers.add_parser("delete", help="Eliminar archivo dentro de FiUnamFS")
+    p_delete.add_argument("--img", default="fiunamfs.img", help="Imagen FiUnamFS")
+    p_delete.add_argument("--file", required=True, help="Archivo que quieres borrar dentro de FiUnamFS")
+
+    #
     # --- PARSEAR ---
     #
     args = parser.parse_args()
@@ -216,6 +345,15 @@ def main():
     elif args.cmd == "extract":
         rc = cmd_extract(args.img, args.file, args.dest)
         sys.exit(rc)
+
+    elif args.cmd == "import":
+        rc = cmd_import(args.img, args.src, args.dest)
+        sys.exit(rc)
+
+    elif args.cmd == "delete":
+        rc = cmd_delete(args.img, args.file)
+        sys.exit(rc)
+
 
 
 if __name__ == "__main__":
