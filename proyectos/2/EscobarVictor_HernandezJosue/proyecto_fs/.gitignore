@@ -1,0 +1,15 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE folders
+.vscode/
+.idea/
+
+# Test images (FiUnamFS)
+*.img
+*.iso
+
+# logs
+*.log
