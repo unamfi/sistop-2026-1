@@ -63,11 +63,12 @@ class DiscoVirtual:
                 fin = min(inicio + self.CLUSTER_SIZE, len(data))
                 cluster_data = data[inicio:fin]
                 
+                # Relleno del último cluster para que mida exactamente 1024 bytes
                 if len(cluster_data) < self.CLUSTER_SIZE:
                     cluster_data += b'\x00' * (self.CLUSTER_SIZE - len(cluster_data))
                 self.escribir_cluster(cluster_inicial + i, cluster_data)
                 
-  # ============================================================================
+# ============================================================================
 # VALIDADOR Y METADATOS
 # ============================================================================
 
@@ -80,6 +81,23 @@ class Superbloque:
         sb_data = self.disco.leer_cluster(0)
 
         try:
+            """
+            La estructura del superbloque tiene valores separados por offsets
+            fijos. Usamos struct.unpack para extraerlos.
+
+            <  = little-endian
+            9s = nombre (9 bytes)
+            1x = byte reservado (skip)
+            5s = versión
+            5x = 5 bytes ignorados
+            16s = etiqueta del volumen
+            4x = ignorados
+            I = uint32 (cluster size)
+            1x
+            I = directorio clusters
+            1x
+            I = total clusters
+            """
             nombre, version, etiqueta, tam_cluster, dir_clusters, total_clusters = struct.unpack(
                 '<9s1x5s5x16s4xI1xI1xI', sb_data[:54]
             )
@@ -137,6 +155,7 @@ class EntradaDirectorio:
 
     def _parse(self, data):
         self.tipo = chr(data[0])
+        # El nombre ocupa bytes [1:16], hay que quitar nulos y espacios.
         self.nombre = data[1:16].decode('ascii', errors='ignore').strip('\x00').strip()
         self.cluster_inicial = struct.unpack('<I', data[16:20])[0]
         self.tamano = struct.unpack('<I', data[20:24])[0]
@@ -144,6 +163,7 @@ class EntradaDirectorio:
         self.fecha_modificacion = data[38:52].decode('ascii', errors='ignore').strip('\x00')
 
     def is_empty(self):
+        # Reglas para determinar si la entrada es una entrada vacía o un archivo válido
         return (self.tipo == '-' or 
                 self.tipo == '#' or
                 self.nombre == self.EMPTY_NAME or 
@@ -151,6 +171,10 @@ class EntradaDirectorio:
                 '...............' in self.nombre)
 
     def to_bytes(self):
+        """
+        Aquí se crea manualmente la entrada de directorio,
+        asegurando que cada campo mida exactamente lo que el FS requiere.
+        """
         nombre_enc = self.nombre.encode('ascii')[:15].ljust(15, b'\x00')
         fecha_cr = self.fecha_creacion.encode('ascii')[:14].ljust(14, b'\x00')
         fecha_mod = self.fecha_modificacion.encode('ascii')[:14].ljust(14, b'\x00')
@@ -171,8 +195,11 @@ class Directorio:
         self.entradas = self._cargar_entradas()
 
     def _cargar_entradas(self):
+        """
+        Cada cluster del directorio contiene 16 entradas de 64 bytes.
+        Se recorren los clusters 1 a 4 y se construyen todas las entradas.
+        """
         entradas = []
-        # Clusters 1-4 para directorio
         for cluster in range(1, 5):
             for entrada_idx in range(16):
                 offset = (cluster * DiscoVirtual.CLUSTER_SIZE) + (entrada_idx * EntradaDirectorio.SIZE)
@@ -206,6 +233,10 @@ class Directorio:
             return None
 
     def actualizar_entrada(self, indice, entrada):
+        """
+        Calcula el cluster y offset correcto de la entrada modificada
+        para actualizarla en la imagen del FS.
+        """
         with self.lock:
             cluster = 1 + (indice // 16)
             entrada_en_cluster = indice % 16
@@ -231,7 +262,11 @@ class GestorEspacio:
         self.lock = RLock()
         
     def buscar_espacio_contiguo(self, num_clusters):
-        """Busca espacio contiguo para num_clusters"""
+        """
+        Se recorre el área del directorio buscando el num_clusters que estén llenos
+        solo de ceros (indicando que están libres).
+        Es necesario que sean contiguos.
+        """
         with self.lock:
             inicio = DiscoVirtual.DIR_START_CLUSTER + DiscoVirtual.DIR_CLUSTERS
             total = self.total_clusters 
@@ -241,6 +276,8 @@ class GestorEspacio:
             
             for c in range(inicio, total):
                 data = self.disco.leer_cluster(c)
+                
+                # Un cluster está libre si TODOS los bytes son 0
                 if all(b == 0 for b in data):
                     if cluster_inicial is None:
                         cluster_inicial = c
@@ -300,7 +337,12 @@ class FileSystemOps:
             return self.directorio.listar_archivos()
 
     def extraer_archivo(self, nombre_fs, ruta_destino):
-        """Extrae archivo del FS a la computadora"""
+        """
+        Extraer archivo:
+        - Encuentra entrada del directorio
+        - Lee los clusters asociados
+        - Recorta al tamaño real (el último cluster puede tener relleno)
+        """
         with self.lock_ops:
             idx, entrada = self.directorio.buscar_por_nombre(nombre_fs)
 
@@ -325,7 +367,15 @@ class FileSystemOps:
             return ruta_destino
 
     def agregar_archivo(self, ruta_origen, nombre_fs=None):
-        """Agrega archivo al FS"""
+        """
+        agregar_archivo:
+        - Revisar si el archivo especificado existe
+        - Leer archivo real
+        - Calcular clusters necesarios para guardarlo
+        - Buscar clusters contiguos
+        - Escribir clusters en el IMG
+        - Crear entrada de directorio
+        """
         with self.lock_ops:
             if nombre_fs is None:
                 nombre_fs = os.path.basename(ruta_origen)
@@ -372,7 +422,11 @@ class FileSystemOps:
                 self.cambio_notificacion.notify_all()
 
     def eliminar_archivo(self, nombre_fs):
-        """Elimina archivo del FS"""
+        """
+        Eliminar archivo:
+        - Liberar clusters (llenarlos con ceros)
+        - Marcar entrada como vacía
+        """
         with self.lock_ops:
             idx, entrada = self.directorio.buscar_por_nombre(nombre_fs)
 
@@ -408,6 +462,9 @@ class OperacionConcurrente(Thread):
         self.daemon = True
         
     def run(self):
+        """
+        Wrapper para ejecutar operaciones en el FS sin congelar la GUI.
+        """
         try:
             resultado = self.operacion(*self.args)
             if self.callback_exito:
@@ -430,6 +487,13 @@ class MonitorIntegridad(Thread):
         self.evento_parada = Event()
 
     def run(self):
+        """
+        Cada cierto intervalo de tiempo:
+        - Relee el superbloque
+        - Consulta el espacio libre
+        - Notifica a la GUI si algo cambió
+        Este monitor detecta corrupción o modificaciones externas.
+        """
         while self.activo:
             if self.evento_parada.wait(self.intervalo):
                 break
@@ -521,7 +585,10 @@ class AplicacionFS:
         self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
     def _monitor_cambios(self):
-        """Hilo para actualizar la GUI cuando hay cambios"""
+        """
+        Espera notificaciones (Condition) enviadas por las operaciones de FS.
+        Esto evita estar refrescando la GUI constantemente.
+        """
         while True:
             with self.fs.cambio_notificacion:
                 self.fs.cambio_notificacion.wait()
