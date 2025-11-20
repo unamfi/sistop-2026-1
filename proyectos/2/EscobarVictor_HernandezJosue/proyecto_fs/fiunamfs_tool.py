@@ -296,6 +296,54 @@ def cmd_delete(path, filename):
         print(f"Archivo '{filename}' eliminado correctamente.")
         return 0
 
+def cmd_rename(img_path, old_name, new_name):
+    """Renombra un archivo dentro de FiUnamFS (solo cambia nombre y mtime)."""
+    if not os.path.exists(img_path):
+        print("Imagen no encontrada:", img_path)
+        return 1
+
+    if len(new_name) > 14:
+        print("ERROR: El nombre nuevo excede 14 caracteres.")
+        return 1
+
+    with open(img_path, "r+b") as fd:
+        sb = read_superblock(fd)
+        entries = read_directory(fd, sb)
+
+        cluster_size = sb['cluster_size']
+        dir_offset = cluster_size * 1
+
+        # buscar entrada
+        idx = None
+        for i, e in enumerate(entries):
+            if e["name"] == old_name:
+                idx = i
+                break
+
+        if idx is None:
+            print("Archivo no encontrado:", old_name)
+            return 1
+
+        entry_offset = dir_offset + idx * 64
+
+        # nuevo nombre (14 chars, padded con espacios)
+        new_name_padded = new_name.ljust(14)
+
+        # timestamp nuevo
+        now = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+
+        # escribir nombre (bytes 1–15)
+        fd.seek(entry_offset + 1)
+        fd.write(new_name_padded.encode("ascii"))
+
+        # escribir mtime (bytes 38–51)
+        fd.seek(entry_offset + 38)
+        fd.write(now.encode("ascii"))
+
+        print(f"Archivo renombrado: {old_name} -> {new_name}")
+        return 0
+
+
 
 def main():
     parser = argparse.ArgumentParser(description="Herramienta FiUnamFS")
@@ -330,6 +378,14 @@ def main():
     p_delete.add_argument("--img", default="fiunamfs.img", help="Imagen FiUnamFS")
     p_delete.add_argument("--file", required=True, help="Archivo que quieres borrar dentro de FiUnamFS")
 
+        #
+    # --- SUBCOMANDO RENAME ---
+    #
+    p_rename = subparsers.add_parser("rename", help="Renombrar archivo dentro de FiUnamFS")
+    p_rename.add_argument("--img", default="fiunamfs.img", help="Imagen FiUnamFS")
+    p_rename.add_argument("--old", required=True, help="Nombre actual")
+    p_rename.add_argument("--new", required=True, help="Nuevo nombre")
+
     #
     # --- PARSEAR ---
     #
@@ -353,6 +409,10 @@ def main():
     elif args.cmd == "delete":
         rc = cmd_delete(args.img, args.file)
         sys.exit(rc)
+    elif args.cmd == "rename":
+        rc = cmd_rename(args.img, args.old, args.new)
+        sys.exit(rc)
+
 
 
 
