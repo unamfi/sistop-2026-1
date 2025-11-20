@@ -1,222 +1,185 @@
-
 # Proyecto 2 – Micro sistema de archivos FiUnamFS
 
 ## Autores
-
 - Escobar Díaz Víctor Manuel  
 - Hernández Rubio Josue  
 
+---
+
 ## Descripción general
 
-Este proyecto implementa una herramienta en Python para manipular el micro–sistema de archivos **FiUnamFS**, almacenado en un archivo de 1.44 MB (imagen de diskette).  
+Este proyecto implementa una herramienta en Python para manipular el micro–sistema de archivos **FiUnamFS**, almacenado en una imagen de 1.44 MB (formato tipo disquete).
 
-La herramienta permite:
+La herramienta soporta:
 
-- Listar el contenido del directorio raíz de FiUnamFS. (`list`).
-- Copiar archivos **desde** FiUnamFS hacia la computadora (`extract`).
-- Copiar archivos **desde la computadora** hacia FiUnamFS (`import`).
-- Eliminar archivos dentro de FiUnamFS (`delete`).
-- Renombrar archivos dentro de FiUnamFS (`rename`).
+- list – Listar el contenido del directorio raíz.  
+- extract – Extraer archivos desde la imagen.  
+- import – Importar archivos desde la computadora hacia la imagen.  
+- delete – Eliminar archivos dentro de la imagen.  
+- rename – Renombrar archivos dentro de la imagen.  
 
-Además, el acceso a la imagen está protegido con un **Read/Write Lock** para permitir un uso seguro desde múltiples hilos.
+El sistema está protegido mediante un **Read/Write Lock**, lo cual permite múltiples lectores simultáneos y escritores exclusivos, garantizando consistencia.
 
 ---
 
 ## Requisitos
 
 - **Lenguaje:** Python 3.x  
-- **Probado en:** Windows 10, usando Git Bash y `py` como lanzador de Python.  
-- **Dependencias externas:** Solo módulos estándar de Python:
-  - `struct`
-  - `os`
-  - `argparse`
-  - `sys`
-  - `datetime`
-  - `threading`
-
-- **Archivo de imagen:**  
-  - `fiunamfs.img` (o una imagen compatible)  
-  - Debe ser una imagen creada con el formato **FiUnamFS** versión `26-1` o `26-2`.  
-  - La imagen **no se sube** al repositorio del profesor; se usa únicamente para pruebas locales.
+- **Probado en:** Windows 10 (Git Bash con `py`)  
+- **Dependencias:** Módulos estándar  
+  - `struct`, `os`, `argparse`, `sys`, `datetime`, `threading`
+- **Imagen FIUNAMFS:**  
+  - Compatible con versiones **26-1** y **26-2**
 
 ---
 
 ## Estructura del proyecto
 
-Dentro de `proyectos/2/EscobarVictor_HernandezJosue/proyecto_fs/` tenemos:
-
-- `fiunamfs_tool.py` – Programa principal, implementación de la herramienta.  
-- `tests/` – Directorio reservado para pruebas (por ejemplo, scripts o notas).  
-- `fiunamfs.img` – Imagen del sistema de archivos usada para pruebas locales (no incluida en la entrega al profesor).
+```
+proyectos/2/EscobarVictor_HernandezJosue/proyecto_fs/
+│
+├── fiunamfs_tool.py      # Implementación de FiUnamFS
+├── README.md             # Documentación del proyecto
+└── tests/                # Carpeta opcional de pruebas
+```
 
 ---
 
 ## Uso de la herramienta
 
-Todos los comandos se invocan con la forma:
+Todos los comandos siguen la forma:
 
-`bash`
+```
 py fiunamfs_tool.py <comando> [opciones]
-- Copiar archivos **desde la computadora** hacia FiUnamFS (`import`).
-- Eliminar archivos dentro de FiUnamFS (`delete`).
-- Renombrar archivos dentro de FiUnamFS (`rename`).
-
-Además, el acceso a la imagen está protegido con un **Read/Write Lock** para permitir un uso seguro desde múltiples hilos.
+```
 
 ---
 
-## Requisitos
+## 1. Listar archivos (list)
 
-- **Lenguaje:** Python 3.x
-- **Probado en:** Windows 10, usando Git Bash y `py` como lanzador de Python.
-- **Dependencias externas:** Solo módulos estándar de Python:
-  - `struct`
-  - `os`
-  - `argparse`
-  - `sys`
-  - `datetime`
-  - `threading`
-
-- **Archivo de imagen:**
-  - `fiunamfs.img` (o una imagen compatible)
-  - Debe ser una imagen creada con el formato **FiUnamFS** versión `26-1` o `26-2`.
-  - La imagen **no se sube** al repositorio del profesor; se usa únicamente para pruebas locales.
-
----
-
-## Estructura del proyecto
-
-Dentro de `proyectos/2/EscobarVictor_HernandezJosue/proyecto_fs/` tenemos:
-
-- `fiunamfs_tool.py` – Programa principal, implementación de la herramienta.
-- `tests/` – Directorio reservado para pruebas (por ejemplo, scripts o notas).
-- `fiunamfs.img` – Imagen del sistema de archivos usada para pruebas locales (no incluida en la entrega al profesor).
-
----
-
-## Uso de la herramienta
-
-Todos los comandos se invocan con la forma:
-
-`bash`
-py fiunamfs_tool.py <comando> [opcion]
-
-## Comandos disponibles
-
-### 1. Listar archivos (list)
-
-Muestra todo el contenido del directorio FiUnamFS.
-
-`bash`
+```
 py fiunamfs_tool.py list --img fiunamfs.img
+```
 
-###2. Extraer archivos (extract)
-Copia un archivo desde la imagen hacia tu computadora.
+---
 
-`bash`
+## 2. Extraer archivos (extract)
+
+```
 py fiunamfs_tool.py extract --img fiunamfs.img --file saludo.jpg --dest saludo_extraido.jpg
+```
 
-###3. Importar archivos (import)
-Copia un archivo desde la computadora hacia la imagen FiUnamFS.
+---
 
-`bash`
+## 3. Importar archivos (import)
+
+```
 py fiunamfs_tool.py import --img fiunamfs.img --src prueba.txt --dest prueba.txt
+```
 
-El sistema busca espacio contiguo libre, asigna clusters y crea la entrada del directorio.
+---
 
-###4. Eliminar archivos (delete)
-Marca la entrada como libre dentro del directorio y libera los clusters ocupados.
+## 4. Eliminar archivos (delete)
 
-`bash`
+```
 py fiunamfs_tool.py delete --img fiunamfs.img --file ejemplo.txt
+```
 
-###5. Renombrar archivos (rename)
-Cambia el nombre de un archivo existente dentro de la imagen.
+---
 
-`bash`
+## 5. Renombrar archivos (rename)
+
+```
 py fiunamfs_tool.py rename --img fiunamfs.img --old viejo.txt --new nuevo.txt
+```
 
 ---
-###Detalles de Implementación
-Lectura del Superbloque
-El programa interpreta el primer sector (superbloque) y lee:
 
-Magic: "FiUnamFS"
+## Detalles de implementación
 
-Version: "26-1" o "26-2"
+### Lectura del Superbloque
 
-Label: nombre del volumen
+El programa valida:
 
-cluster_size
+- Magic: `FiUnamFS`  
+- Versión: `26-1` o `26-2`  
+- Label del volumen  
+- cluster_size  
+- dir_clusters  
+- total_clusters  
 
-dir_clusters
-
-total_clusters
-
-El programa no continúa si la imagen no cumple con estos requisitos.
----
+Si alguno no coincide, la imagen se rechaza.
 
 ---
-##Estructura del directorio
-Cada entrada del directorio mide 64 bytes e incluye:
 
-Tipo
+## Estructura del directorio
 
-Nombre (14 bytes)
+Cada entrada ocupa 64 bytes y contiene:
 
-Cluster inicial
+- Tipo  
+- Nombre (14 bytes)  
+- Cluster inicial  
+- Tamaño  
+- ctime  
+- mtime  
 
-Tamaño
+Entradas libres aparecen como:
 
-ctime
-
-mtime
-
-Las entradas vacías se representan como:
-
+```
 ..............
+```
 
 ---
 
----
-###Asignación contigua de clusters
-Para importar un archivo:
+## Asignación contigua de clusters
 
-Se calcula el número de clusters necesarios.
+Para la operación *import*:
 
-Se identifica qué clusters están ocupados.
-
-Se buscan clusters contiguos disponibles.
-
-Se escribe el archivo en la imagen.
-
-Se agrega una entrada válida en el directorio.
----
+1. Se calcula cuántos clusters necesita el archivo.  
+2. Se revisa qué clusters están ocupados.  
+3. Se buscan clusters contiguos libres.  
+4. Se escribe el archivo en la imagen.  
+5. Se crea la entrada válida en el directorio.  
 
 ---
-###Manejo de hilos y sincronización
-Para cumplir con la sección de hilos y sincronización requerida en el proyecto:
 
-Se implementó un Read/Write Lock con el módulo threading, permitiendo:
+## Manejo de hilos y sincronización
 
--Lectores concurrentes (list y extract).
+Se implementó un **Read/Write Lock**:
 
--Escritores exclusivos (import, delete, rename).
+- Lectores simultáneos:
+  - list  
+  - extract  
 
-Esto evita condiciones de carrera al modificar la imagen y garantiza consistencia cuando varias operaciones acceden al archivo simultáneamente.
+- Escritores exclusivos:
+  - import  
+  - delete  
+  - rename  
+
+Esto evita condiciones de carrera y mantiene la consistencia del sistema de archivos.
+
 ---
 
----
-###Pruebas realizadas
-Se validaron todas las operaciones del sistema:
+## Pruebas realizadas
 
-Operación	Estado
-Listar	        Correcto
-Extraer	        Correcto
-Importar	Correcto
-Renombrar	Correcto
-Eliminar	Correcto
-Sincronización con hilos	Correcto
+| Operación              | Estado   |
+|------------------------|----------|
+| Listar                 | Correcto |
+| Extraer                | Correcto |
+| Importar               | Correcto |
+| Renombrar              | Correcto |
+| Eliminar               | Correcto |
+| Sincronización (hilos) | Correcto |
 
-Las pruebas se realizaron en Windows 10 con Git Bash usando el comando py para ejecutar Python.
+Todas las pruebas se realizaron en Windows 10 usando Git Bash con:
+
+```
+py fiunamfs_tool.py ...
+```
+
 ---
+
+## Comentarios finales
+
+El proyecto implementa correctamente todas las operaciones requeridas, maneja sincronización con hilos y soporta imágenes FiUnamFS versión 26-1 y 26-2.  
+Las pruebas realizadas confirmaron el funcionamiento correcto del sistema.
