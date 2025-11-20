@@ -44,6 +44,35 @@ def leer_superbloque(ruta_imagen):
         "total_clusters": total_clusters,
     }
 
+def leer_directorio(ruta_imagen, cluster_size, dir_clusters):
+    entradas = []
+
+    with open(ruta_imagen, "rb") as f:
+        # El directorio comienza en el cluster 1
+        inicio_directorio = cluster_size  # 1 * cluster_size
+        f.seek(inicio_directorio)
+
+        total_entradas = (cluster_size * dir_clusters) // 64
+
+        for i in range(total_entradas):
+            entrada = f.read(64)
+
+            nombre = entrada[0:15].decode("ascii", errors="ignore").strip()
+
+            # Ignorar entradas vacías
+            if nombre == "" or nombre.startswith("."):
+                continue
+
+            # Tamaño del archivo (bytes) → offset 16-23
+            tam = struct.unpack("<I", entrada[16:20])[0]
+
+            # Cluster inicial → offset 24-27
+            cluster_ini = struct.unpack("<I", entrada[24:28])[0]
+
+            entradas.append((nombre, tam, cluster_ini))
+
+    return entradas
+
 def main():
     if len(sys.argv) != 2:
         print("Uso: python fiunamfs_info.py <imagen_fiunamfs>")
@@ -71,6 +100,18 @@ def main():
     print(f"Tamaño de cluster  : {info['cluster_size']} bytes")
     print(f"Clusters de directorio: {info['dir_clusters']}")
     print(f"Total de clusters  : {info['total_clusters']}")
+
+    # Leer y listar directorio
+    print("\n=== Archivos en el directorio ===")
+    entradas = leer_directorio(ruta_imagen,
+                               info['cluster_size'],
+                               info['dir_clusters'])
+
+    if not entradas:
+        print("No hay archivos en el sistema de archivos.")
+    else:
+        for nombre, tam, cluster in entradas:
+            print(f"{nombre:20}  {tam:10} bytes  Cluster: {cluster}")
 
 if __name__ == "__main__":
     main()

@@ -46,3 +46,20 @@ Dentro del directorio del proyecto, ejecutar:
 
 ```bash
 python fiunamfs_info.py fiunamfs.img
+
+## 📌 Lectura y listado de entradas del directorio
+
+En este paso del proyecto se implementó la funcionalidad encargada de leer el área del directorio del sistema de archivos FiUnamFS, la cual se encuentra ubicada a partir del *cluster 1* y abarca *3 clusters*, según lo indicado en el superbloque.
+
+Cada entrada del directorio tiene un tamaño fijo de **64 bytes**, y se obtienen los campos:
+
+- Nombre del archivo (primeros 15 bytes)
+- Tamaño del archivo en bytes (offset 16–19)
+- Cluster inicial donde se ubica el contenido del archivo (offset 24–27)
+
+Con esta información, el programa ahora es capaz de:
+
+- Recorrer todas las entradas asignadas al directorio
+- Identificar entradas ocupadas o vacías
+- Mostrar los archivos encontrados en el formato:
+
