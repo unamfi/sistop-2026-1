@@ -75,6 +75,69 @@ def read_directory(fd, sb):
 
     return entries
 
+def extract_file(fd, sb, filename, dest):
+    entries = read_directory(fd, sb)
+    for e in entries:
+        if e['name'] == filename:
+            if e['start_cluster'] == 0 or e['size'] == 0:
+                print("Archivo vacío o con start 0")
+                return False
+            start_byte = e['start_cluster'] * sb['cluster_size']
+            fd.seek(start_byte)
+            data = fd.read(e['size'])
+            with open(dest, 'wb') as out:
+                out.write(data)
+            print(f"Archivo {filename} extraído a {dest}")
+            return True
+    print("No se encontró el archivo:", filename)
+    return False
+
+def cmd_extract(img_path, filename, dest):
+    if not os.path.exists(img_path):
+        print("Imagen no encontrada:", img_path)
+        return 1
+
+    with open(img_path, "rb") as fd:
+        sb = read_superblock(fd)
+
+        # Validar versión
+        if sb['magic'] != 'FiUnamFS' or sb['version'] not in ['26-1', '26-2']:
+            print("ERROR: versión no soportada:", sb['version'])
+            return 2
+
+        # Leer directorio
+        entries = read_directory(fd, sb)
+
+        # Normalizar nombre buscado
+        filename_norm = filename.strip().lower()
+
+        # Buscar
+        found = None
+        for e in entries:
+            name_norm = e['name'].strip().lower()
+            if name_norm == filename_norm:
+                found = e
+                break
+
+        if not found:
+            print("No se encontró el archivo dentro del sistema:", filename)
+            return 3
+
+        # Calcular offset de datos
+        cluster_size = sb['cluster_size']
+        start = found['start_cluster'] * cluster_size
+        size = found['size']
+
+        fd.seek(start)
+        data = fd.read(size)
+
+        # Guardar en destino
+        with open(dest, "wb") as out:
+            out.write(data)
+
+        print(f"Archivo extraído correctamente: {dest}")
+        return 0
+
 
 def cmd_list(path):
     if not os.path.exists(path):
@@ -122,15 +185,39 @@ def cmd_list(path):
 
 def main():
     parser = argparse.ArgumentParser(description="Herramienta FiUnamFS")
-    parser.add_argument('cmd', choices=['list'], help='Comando')
-    parser.add_argument('--img', default='fiunamfs.img', help='Ruta de la imagen FiUnamFS')
+    subparsers = parser.add_subparsers(dest="cmd", required=True)
 
+    #
+    # --- SUBCOMANDO LIST ---
+    #
+    p_list = subparsers.add_parser("list", help="Listar contenido de la imagen FiUnamFS")
+    p_list.add_argument("--img", default="fiunamfs.img", help="Ruta a la imagen FiUnamFS")
+
+    #
+    # --- SUBCOMANDO EXTRACT ---
+    #
+    p_extract = subparsers.add_parser("extract", help="Extraer archivo desde la imagen")
+    p_extract.add_argument("--img", default="fiunamfs.img", help="Ruta a la imagen FiUnamFS")
+    p_extract.add_argument("--file", required=True, help="Nombre del archivo dentro de FiUnamFS")
+    p_extract.add_argument("--dest", required=True, help="Ruta destino para guardar el archivo")
+
+    #
+    # --- PARSEAR ---
+    #
     args = parser.parse_args()
 
-    if args.cmd == 'list':
+    #
+    # --- EJECUTAR COMANDOS ---
+    #
+    if args.cmd == "list":
         rc = cmd_list(args.img)
+        sys.exit(rc)
+
+    elif args.cmd == "extract":
+        rc = cmd_extract(args.img, args.file, args.dest)
         sys.exit(rc)
 
 
 if __name__ == "__main__":
     main()
+
