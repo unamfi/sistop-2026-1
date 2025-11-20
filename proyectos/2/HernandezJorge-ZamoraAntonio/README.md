@@ -47,7 +47,7 @@ Dentro del directorio del proyecto, ejecutar:
 ```bash
 python fiunamfs_info.py fiunamfs.img
 
-## 📌 Lectura y listado de entradas del directorio
+### 📌 Lectura y listado de entradas del directorio
 
 En este paso del proyecto se implementó la funcionalidad encargada de leer el área del directorio del sistema de archivos FiUnamFS, la cual se encuentra ubicada a partir del *cluster 1* y abarca *3 clusters*, según lo indicado en el superbloque.
 
@@ -62,4 +62,22 @@ Con esta información, el programa ahora es capaz de:
 - Recorrer todas las entradas asignadas al directorio
 - Identificar entradas ocupadas o vacías
 - Mostrar los archivos encontrados en el formato:
+
+### 📌 Lectura de contenido de archivos en FiUnamFS
+
+En esta etapa del proyecto se implementó la funcionalidad necesaria para leer el contenido de un archivo almacenado en el sistema de archivos FiUnamFS. Para lograrlo, se realiza lo siguiente:
+
+1️⃣ Se recorre nuevamente el directorio para localizar una entrada cuyo nombre coincida con el archivo solicitado.  
+2️⃣ Si el archivo es encontrado:
+- Se toma su cluster inicial y tamaño en bytes
+- Se calcula la posición real dentro de la imagen
+- Se lee el contenido completo del archivo desde la imagen
+- Se muestra como texto al usuario (cuando es posible)
+
+3️⃣ Si el archivo **no** existe en el directorio:
+- Se muestra un mensaje indicando que no fue encontrado
+
+Actualmente, la imagen del sistema de archivos contiene únicamente entradas vacías, por lo que se espera la salida:
+
+
 

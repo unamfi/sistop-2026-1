@@ -73,6 +73,24 @@ def leer_directorio(ruta_imagen, cluster_size, dir_clusters):
 
     return entradas
 
+def leer_archivo(ruta_imagen, info, nombre_buscado):
+    cluster_size = info["cluster_size"]
+
+    # Primero buscamos la entrada del archivo en el directorio
+    entradas = leer_directorio(ruta_imagen, cluster_size, info["dir_clusters"])
+
+    for nombre, tam, cluster_ini in entradas:
+        if nombre == nombre_buscado:
+            with open(ruta_imagen, "rb") as f:
+                # Posición física del archivo dentro de la imagen
+                pos = cluster_ini * cluster_size
+                f.seek(pos)
+
+                contenido = f.read(tam)
+                return contenido
+
+    return None
+
 def main():
     if len(sys.argv) != 2:
         print("Uso: python fiunamfs_info.py <imagen_fiunamfs>")
@@ -112,6 +130,20 @@ def main():
     else:
         for nombre, tam, cluster in entradas:
             print(f"{nombre:20}  {tam:10} bytes  Cluster: {cluster}")
+
+    # ===== Prueba de lectura de archivo =====
+    nombre_prueba = "archivo.txt"
+    contenido = leer_archivo(ruta_imagen, info, nombre_prueba)
+
+    print("\n=== Lectura de archivo de prueba ===")
+    if contenido is None:
+        print(f"El archivo '{nombre_prueba}' no se encontró en el FS.")
+    else:
+        print(f"Contenido de '{nombre_prueba}':\n")
+        try:
+            print(contenido.decode("ascii", errors="ignore"))
+        except:
+            print("No se pudo mostrar como texto.")
 
 if __name__ == "__main__":
     main()
