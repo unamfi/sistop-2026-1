@@ -16,8 +16,8 @@ public class Main {
         while(!salir){
             System.out.println("\nSelecciona una opcion:");
             System.out.println("1. Listar archivos");
-            System.out.println("2. Copiar archivo");
-            System.out.println("3. Copiar archivo");
+            System.out.println("2. Copiar archivo (sacar de img)");
+            System.out.println("3. Copiar archivo (meter a img)");
             System.out.println("4. Eliminar");
             System.out.println("5. Salir");
             
