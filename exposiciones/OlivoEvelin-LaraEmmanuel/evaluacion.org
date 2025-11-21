@@ -1,0 +1,61 @@
+#+title: Evaluación de la exposición
+#+author: Gunnar Wolf
+
+* Sistema de archivos ext4
+
+- Tema presentado por :: Evelin Jiménez y Emmanuel Lara
+- Calificación global :: 9.36
+
+|------------------------+------+--------------------+------+---------|
+| Evaluación  compañeros | Peso | Evaluación docente | Peso | *Total* |
+|------------------------+------+--------------------+------+---------|
+|                    9.6 |  0.3 |               9.25 |  0.7 |    9.36 |
+|------------------------+------+--------------------+------+---------|
+#+TBLFM: @2$5=$1*$2+$3*$4;f-2
+
+* Evaluación grupal
+
+|              | 1 | 2 | 3 | 4 | 5 | Total |
+|--------------+---+---+---+---+---+-------|
+| Originalidad | 0 | 0 | 0 | 2 | 3 |  9.20 |
+| Nivel        | 0 | 0 | 0 | 1 | 4 |  9.60 |
+| Relevancia   | 0 | 0 | 0 | 1 | 4 |  9.60 |
+| Claridad     | 0 | 0 | 0 | 1 | 4 |  9.60 |
+| Presencia    | 0 | 0 | 0 | 0 | 5 | 10.00 |
+|--------------+---+---+---+---+---+-------|
+|              |   |   |   |   |   |  9.60 |
+#+TBLFM: @2$7..@6$7=10 * (0.2*$2 + 0.4*$3 + 0.6*$4 + 0.8*$5 + $6 ) / vsum($2..$6); f-2::@7$7=vmean(@2$7..@6$7); f-2
+
+** Comentarios de los compañeros
+- Me gusto el tema que eligieron, como dijo el profesor, es cercano al tema
+  que estamos abordando en la teoría. Su exposición es clara y tienen buen
+  dominio del tema.
+
+* Evaluación por parte del docente
+
+| *Aspecto*              | *Peso* | *Evaluación* | *Puntos* |
+|------------------------+--------+--------------+----------|
+| Originalidad del tema  |    0.1 |           10 |       1. |
+| Material desarrollado  |    0.2 |           10 |       2. |
+| Contenido              |    0.2 |           10 |       2. |
+| Fuentes bibliográficas |    0.1 |           10 |       1. |
+| Uso del tiempo         |    0.1 |           10 |       1. |
+| Dominio del tema       |   0.15 |          7.5 |    1.125 |
+| Presencia              |   0.15 |          7.5 |    1.125 |
+|------------------------+--------+--------------+----------|
+| *Global*               |        |              |     9.25 |
+#+TBLFM: @<<$4..@>>$4=$2*$3::$4=vsum(@<<..@>>);f-2
+
+** Comentarios
+- ¡Muy buena presentación!
+  - Hay un par de errores en la presentación, pero es una cantidad muy
+    grande de información... ¡no podríamos esperar que fuera perfecta! 😉
+- El tono en el que hablan es muy homogéneo, facilita que se pierda un poco
+  la atención
+- Les he dicho que es completamente aceptable pedir asistencia de una
+  herramienta LLM para estructurar su texto de forma coherente — y me
+  parece que lo hicieron (¡y está muy bien!) Sin embargo, como
+  recomendación: estas herramientas tienden a cerrar siempre con un resumen
+  de lo presentado a modo de /conclusiones/. En particular, me pareció que
+  sus conclusiones repitieron muy de cerca lo que acababan de decir,
+  resultando repetitivo.
