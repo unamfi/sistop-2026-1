@@ -3,7 +3,8 @@ import struct
 import threading
 import time
 from datetime import datetime
-
+import tkinter as tk
+from tkinter import messagebox, filedialog, ttk
 
 TAMANO_DISQUETE = 1440 * 1024
 TAMANO_SECTOR = 512
@@ -13,44 +14,19 @@ SUPERBLOQUE_CLUSTER = 0
 
 CLUSTERS_DIRECTORIO_DEFECTO = 4 
 NOMBRE_SISTEMA_ARCHIVOS = 'FiUnamFS'
-
 VERSION_SISTEMA = '26-1'  
 ARCHIVO_IMAGEN = 'fiunamfs.img'
 
 
 archivo_mutex = threading.Lock() 
 
-FILE_MARK = b'\x2d'             
-
-EMPTY_MARK = b'\x2f'            
-
+FILE_MARK = b'.'             
+EMPTY_MARK = b'-'             
 EMPTY_NAME_MARKER = b'.' * 14 
 
-
-def CLEAR():
-    os.system('cls' if os.name == 'nt' else 'clear')
-
-def pausa():
-    input("\n\tPresione Enter para continuar...")
-
-def menuMainImp():
-    print("\n\t----------------------------------------------")
-    print(f"\t      Sistema de Archivos {NOMBRE_SISTEMA_ARCHIVOS} v{VERSION_SISTEMA}")
-    print("\t----------------------------------------------")
-    print("\t1. Listar directorio")
-    print("\t2. Copiar archivo desde FiUnamFS al sistema (PC)")
-    print("\t3. Copiar archivo desde el sistema (PC) a FiUnamFS")
-    print("\t4. Eliminar archivo en FiUnamFS")
-    print("\t5. Salir")
-    print("\t----------------------------------------------")
-
-def listarDirectorioImp():
-    print("\n\t" + "-"*105)
-    print("\t {:<5} {:<15} | {:<10} | {:<15} | {:<18} | {:<18}".format(
-        "Tipo", "Nombre", "Tamaño", "Cluster Ini", "Fecha Creación", "Fecha Modif"))
-    print("\t" + "-"*105)
-
-
+# -----------------------------------------------------
+# Clase principal del sistema de archivos
+# -----------------------------------------------------
 
 class SistemaArchivosFiUnamFS:
 
@@ -62,18 +38,12 @@ class SistemaArchivosFiUnamFS:
         self.etiqueta_volumen = None
 
     def verificar_existencia_imagen(self):
-        """ Verifica si el archivo .img existe, si no, pide ruta """
-        if not os.path.exists(self.imagen_archivo):
-            print(f"\n\t[!] El archivo '{self.imagen_archivo}' no está en el directorio.")
-            while True:
-                ruta = input("\n\tIngrese la ruta completa del archivo 'fiunamfs.img': ").strip()
-                if os.path.exists(ruta):
-                    self.imagen_archivo = ruta
-                    CLEAR()
-                    print(f"\t[OK] Archivo cargado: {self.imagen_archivo}")
-                    break
-                else:
-                    print("\n\t[X] Archivo no encontrado.")
+        """ Verifica si el archivo .img existe """
+        return os.path.exists(self.imagen_archivo)
+
+    def actualizar_ruta_imagen(self, nueva_ruta):
+        """ Permite actualizar la ruta del archivo de imagen """
+        self.imagen_archivo = nueva_ruta
 
     def leer_superbloque(self):
         """
@@ -81,6 +51,9 @@ class SistemaArchivosFiUnamFS:
         Usa Locks para asegurar lectura atómica si hubiera hilos concurrentes leyendo.
         """
         with archivo_mutex:
+            if not os.path.exists(self.imagen_archivo):
+                 raise FileNotFoundError(f"El archivo de imagen '{self.imagen_archivo}' no existe.")
+
             with open(self.imagen_archivo, 'rb') as img:
                 img.seek(0)
                 superbloque = img.read(1024)
@@ -102,13 +75,17 @@ class SistemaArchivosFiUnamFS:
                     self.clusters_directorio = struct.unpack('<I', superbloque[45:49])[0]
                     self.total_clusters = struct.unpack('<I', superbloque[50:54])[0]
                 except Exception:
-                    print("\t[!] Advertencia: Datos del superbloque corruptos o incompletos. Usando valores por defecto.")
+                    # print("[!] Advertencia: Datos del superbloque corruptos o incompletos. Usando valores por defecto.")
+                    pass
 
                 # Si total_clusters es 0 o erróneo, calcularlo
-                if self.total_clusters == 0:
+                if self.total_clusters == 0 or self.total_clusters is None:
                     img.seek(0, os.SEEK_END)
                     tam_img = img.tell()
-                    self.total_clusters = tam_img // self.tamano_cluster
+                    if tam_img > 0:
+                        self.total_clusters = tam_img // self.tamano_cluster
+                    else:
+                        self.total_clusters = 0 # No se puede leer el tamaño
 
     def leer_entradas_directorio(self):
         """ Retorna una lista de diccionarios con la metadata de los archivos activos """
@@ -137,7 +114,6 @@ class SistemaArchivosFiUnamFS:
                         # Parsear nombre
                         nombre_raw = entrada_bytes[1:15]
 
-                        #####################################COMMIT 2
                         if nombre_raw == EMPTY_NAME_MARKER:
                             continue
 
@@ -147,16 +123,19 @@ class SistemaArchivosFiUnamFS:
                         if nombre == "" or nombre.replace("-", "") == "":
                             continue
                         
-                        ###################################
-                        cluster_ini = struct.unpack('<I', entrada_bytes[16:20])[0]
-                        tamano = struct.unpack('<I', entrada_bytes[20:24])[0]
+                        # Parsear enteros
+                        try:
+                            cluster_ini = struct.unpack('<I', entrada_bytes[16:20])[0]
+                            tamano = struct.unpack('<I', entrada_bytes[20:24])[0]
+                        except struct.error:
+                             continue # Si no se puede parsear, es una entrada corrupta/no terminada
                         
+                        # Parsear fechas
                         creacion = entrada_bytes[24:38].decode('ascii', errors='ignore')
                         modif = entrada_bytes[38:52].decode('ascii', errors='ignore')
 
-                    
+                        # Formatear tipo para visualización
                         tipo_str = "DIR" if tipo == b'.' else "FILE" # Ajuste visual
-
                         try:
                             tipo_char = tipo.decode('ascii')
                         except:
@@ -175,10 +154,16 @@ class SistemaArchivosFiUnamFS:
 
     def _obtener_mapa_clusters(self):
         """ Mapa booleano de clusters ocupados """
+        if self.total_clusters is None:
+             self.leer_superbloque()
+             if self.total_clusters is None:
+                  return [] # No se pudo determinar el tamaño
+
         ocupados = [False] * self.total_clusters
         
         # Superbloque ocupado
-        ocupados[0] = True
+        if self.total_clusters > 0:
+            ocupados[0] = True
         
         # Clusters de directorio ocupados
         for i in range(1, 1 + self.clusters_directorio):
@@ -189,7 +174,8 @@ class SistemaArchivosFiUnamFS:
         entradas = self.leer_entradas_directorio()
         for archivo in entradas:
             inicio = archivo['Cluster Inicial']
-            if archivo['Tamaño'] > 0:
+            # Calculo de cuantos clusters ocupa (techo de division)
+            if archivo['Tamaño'] > 0 and self.tamano_cluster > 0:
                 num_clusters = (archivo['Tamaño'] + self.tamano_cluster - 1) // self.tamano_cluster
             else:
                 num_clusters = 0
@@ -200,28 +186,24 @@ class SistemaArchivosFiUnamFS:
                     ocupados[idx] = True
         return ocupados
 
-
+# -----------------------------------------------------
+# Lógica de Negocio (Operaciones)
+# -----------------------------------------------------
 
 class OperacionesFS:
     def __init__(self, sistema: SistemaArchivosFiUnamFS):
         self.fs = sistema
 
     def listar(self):
+        """ Retorna la lista de archivos para mostrar en la GUI """
         try:
             self.fs.leer_superbloque() # Refrescar metadatos
             archivos = self.fs.leer_entradas_directorio()
-            CLEAR()
-            listarDirectorioImp()
-            if not archivos:
-                print("\t < Directorio Vacío >")
-            else:
-                for a in archivos:
-                    print(f"\t {a['tipo_show']:<5} {a['Nombre']:<15} | {a['Tamaño']:<10} | {a['Cluster Inicial']:<15} | {a['Fecha Creación']} | {a['Fecha Modificación']}")
-            print("\n")
+            return archivos
         except Exception as e:
-            print(f"\t[Error] No se pudo listar: {e}")
+            raise Exception(f"No se pudo listar: {e}")
 
-    def copiar_a_pc(self, nombre_fiunam):
+    def copiar_a_pc(self, nombre_fiunam, ruta_destino_pc):
         """ Copia un archivo del FS virtual a tu computadora """
         try:
             self.fs.leer_superbloque()
@@ -229,15 +211,7 @@ class OperacionesFS:
             archivo_obj = next((a for a in archivos if a['Nombre'] == nombre_fiunam), None)
 
             if not archivo_obj:
-                print(f"\n\t[!] El archivo '{nombre_fiunam}' no existe en FiUnamFS.")
-                return
-
-            # Definir ruta destino local
-            ruta_local = os.path.join(os.getcwd(), nombre_fiunam)
-            # Evitar sobreescritura simple
-            if os.path.exists(ruta_local):
-                base, ext = os.path.splitext(nombre_fiunam)
-                ruta_local = os.path.join(os.getcwd(), f"{base}_copy{ext}")
+                raise FileNotFoundError(f"El archivo '{nombre_fiunam}' no existe en FiUnamFS.")
 
             # Leer datos
             offset_bytes = archivo_obj['Cluster Inicial'] * self.fs.tamano_cluster
@@ -248,19 +222,18 @@ class OperacionesFS:
                     img.seek(offset_bytes)
                     data = img.read(bytes_a_leer)
             
-            with open(ruta_local, 'wb') as out:
+            with open(ruta_destino_pc, 'wb') as out:
                 out.write(data)
             
-            print(f"\n\t[OK] Archivo guardado en: {ruta_local}")
+            return f"Archivo guardado en: {ruta_destino_pc}"
 
         except Exception as e:
-            print(f"\n\t[Error] Falló la copia: {e}")
+            raise Exception(f"Falló la copia a PC: {e}")
 
     def copiar_a_fiunam(self, ruta_origen):
         """ Copia un archivo de tu PC al FS virtual (Asignación Contigua) """
         if not os.path.exists(ruta_origen):
-            print("\t[!] Archivo origen no existe.")
-            return
+            raise FileNotFoundError("Archivo origen no existe en tu PC.")
 
         try:
             # Preparar datos
@@ -271,11 +244,15 @@ class OperacionesFS:
             nombre_final = (nombre_base + ext)[:14]
             
             try:
+                # Comprobar si el nombre ya existe
+                archivos_existentes = self.fs.leer_entradas_directorio()
+                if nombre_final in [a['Nombre'] for a in archivos_existentes]:
+                     raise FileExistsError(f"Ya existe un archivo llamado '{nombre_final}' en FiUnamFS. Por favor, elimínalo primero o usa un nombre diferente en tu PC.")
+
                 nombre_bytes = nombre_final.encode('ascii')
             except UnicodeEncodeError:
-                print("\t[!] Error: El nombre debe contener solo caracteres ASCII.")
-                return
-
+                raise ValueError("El nombre debe contener solo caracteres ASCII.")
+            
             # Calcular clusters necesarios
             self.fs.leer_superbloque()
             clusters_necesarios = (tamano_archivo + self.fs.tamano_cluster - 1) // self.fs.tamano_cluster
@@ -300,8 +277,7 @@ class OperacionesFS:
                     start_cluster = -1
             
             if contador < clusters_necesarios:
-                print("\t[!] Error: No hay espacio contiguo suficiente en el disco.")
-                return
+                raise MemoryError("No hay espacio contiguo suficiente en el disco.")
 
             # Escribir DATOS
             with open(ruta_origen, 'rb') as f_src:
@@ -350,13 +326,12 @@ class OperacionesFS:
                         if slot_encontrado: break
             
             if not slot_encontrado:
-                print("\t[!] Error: Directorio lleno (no hay slots libres).")
+                raise Exception("Directorio lleno (no hay slots libres).")
             else:
-                print(f"\n\t[OK] Archivo '{nombre_final}' escrito exitosamente.")
-                print(f"\t    Cluster inicio: {start_cluster}, Clusters usados: {clusters_necesarios}")
+                return f"Archivo '{nombre_final}' escrito exitosamente.\nCluster inicio: {start_cluster}, Clusters usados: {clusters_necesarios}"
 
         except Exception as e:
-            print(f"\t[Error] {e}")
+            raise Exception(f"Falló la copia a FiUnamFS: {e}")
 
     def eliminar(self, nombre_fiunam):
         """ Marca un archivo como eliminado en el directorio """
@@ -395,12 +370,12 @@ class OperacionesFS:
                             break # Salir de busqueda de clusters
             
             if encontrado:
-                print(f"\n\t[OK] Archivo '{nombre_fiunam}' eliminado.")
+                return f"Archivo '{nombre_fiunam}' eliminado."
             else:
-                print(f"\n\t[!] Archivo '{nombre_fiunam}' no encontrado.")
+                raise FileNotFoundError(f"Archivo '{nombre_fiunam}' no encontrado.")
 
         except Exception as e:
-            print(f"\t[Error] {e}")
+            raise Exception(f"Falló la eliminación: {e}")
 
 # -----------------------------------------------------
 # Interfaz Gráfica con Tkinter
@@ -479,7 +454,7 @@ class FiUnamFS_GUI(tk.Tk):
             try:
                 self.sistema.leer_superbloque()
                 self.info_label.config(text=f"Etiqueta: {self.sistema.etiqueta_volumen} | Cluster Size: {self.sistema.tamano_cluster} B | Total Clusters: {self.sistema.total_clusters}", foreground="green")
-                self.cmd_listar() # Listar al inicio si se pudo cargar
+                #self.cmd_listar() # Listar al inicio si se pudo cargar
             except Exception as e:
                 self.info_label.config(text=f"Error cargando FS: {e}", foreground="red")
         else:
@@ -557,7 +532,8 @@ class FiUnamFS_GUI(tk.Tk):
         messagebox.showerror("Error de Operación", str(error))
         self.info_label.config(text=f"Error cargando FS: {error}", foreground="red")
 
-# -----------------------------------------------------
+
+    # -----------------------------------------------------
     # Funciones de Operación (Comandos de botón)
     # -----------------------------------------------------
 

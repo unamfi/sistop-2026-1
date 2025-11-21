@@ -1,1 +1,9 @@
+# Archivos de caché de Python
+__pycache__/
+*.pyc
+
+# Carpetas de entorno virtual
+venv/
+env/
+
 .DS_Store
