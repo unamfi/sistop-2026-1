@@ -29,10 +29,10 @@ para interpretar correctamente la estructura interna de FiUnamFS.
 |--------------|:-----:|
 | Lectura del superbloque | ✔ |
 | Validación del FS y versión | ✔ |
-| Listar archivos del directorio | En proceso |
-| Leer contenido de un archivo | ❌ |
-| Copiar archivo desde FiUnamFS | ❌ |
-| Copiar archivo a FiUnamFS | ❌ |
+| Listar archivos del directorio | ✔ |
+| Leer contenido de un archivo | ✔ |
+| Copiar archivo desde FiUnamFS | ✔ |
+| Copiar archivo a FiUnamFS | ✔ |
 | Borrado lógico | ❌ |
 | Compactación | ❌ |
 
@@ -128,6 +128,22 @@ Esta mejora deja listo el sistema para extender la funcionalidad hacia:
 - Archivos que ocupen más de un cluster
 - Borrado lógico
 - Compactación del espacio
+
+
+### 📌 Exportar archivos desde FiUnamFS hacia la PC
+
+En este paso se implementó la funcionalidad para recuperar archivos almacenados en la imagen de FiUnamFS y copiarlos al sistema anfitrión.
+
+El proceso que realiza el programa es el siguiente:
+
+1️⃣ Usar la función `leer_archivo()` para localizar y leer el contenido del archivo directamente desde los clusters del sistema de archivos.  
+2️⃣ Verificar que el archivo exista en el directorio del FS.  
+3️⃣ Crear un archivo en la computadora y escribir en él los datos recuperados.  
+4️⃣ Confirmar la correcta exportación del archivo.
+
+Esta funcionalidad permite validar completamente la integridad del archivo dentro de FiUnamFS y garantiza que la información almacenada puede ser recuperada por el usuario cuando sea necesario.
+
+Con esto, se cumple el requerimiento del proyecto de copiar archivos del sistema de archivos FiUnamFS hacia el sistema operativo anfitrión.
 
 
 

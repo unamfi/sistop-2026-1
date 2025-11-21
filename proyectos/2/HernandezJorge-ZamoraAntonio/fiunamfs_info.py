@@ -189,6 +189,20 @@ def buscar_cluster_libre(info, ocupados):
 
     return -1  # No hay espacio disponible
 
+def copiar_de_fiunamfs(ruta_imagen, info, nombre_archivo_fs, nombre_destino_pc):
+    contenido = leer_archivo(ruta_imagen, info, nombre_archivo_fs)
+
+    if contenido is None:
+        print(f"ERROR: El archivo '{nombre_archivo_fs}' no se encontró en el FS.")
+        return False
+
+    # Guardar en PC
+    with open(nombre_destino_pc, "wb") as f:
+        f.write(contenido)
+
+    print(f"Archivo '{nombre_archivo_fs}' exportado correctamente como '{nombre_destino_pc}'.")
+    return True
+
 def main():
     if len(sys.argv) != 2:
         print("Uso: python fiunamfs_info.py <imagen_fiunamfs>")
@@ -229,7 +243,7 @@ def main():
         for nombre, tam, cluster in entradas:
             print(f"{nombre:20}  {tam:10} bytes  Cluster: {cluster}")
 
-    # ===== Prueba de lectura de archivo =====
+    """# ===== Prueba de lectura de archivo =====
     nombre_prueba = "hola.txt"
     contenido = leer_archivo(ruta_imagen, info, nombre_prueba)
 
@@ -241,7 +255,7 @@ def main():
         try:
             print(contenido.decode("ascii", errors="ignore"))
         except:
-            print("No se pudo mostrar como texto.")
+            print("No se pudo mostrar como texto.")"""
 
     """# ===== Copiar archivo de prueba al FS =====
     print("\n=== Copiar archivo de prueba ===")
@@ -252,6 +266,17 @@ def main():
         print("Verifique con el listado del directorio.")
     else:
         print("No se pudo copiar el archivo.")"""
+
+    # ===== Exportar archivo a PC =====
+    print("\n=== Exportar archivo desde el FS ===")
+    
+    archivo_fs = "datos1.txt"   # archivo dentro del FS
+    archivo_pc = "copia_datos1.txt"  # nombre de salida en la PC
+
+    if copiar_de_fiunamfs(ruta_imagen, info, archivo_fs, archivo_pc):
+        print("Exportación completada.")
+    else:
+        print("No se pudo exportar el archivo.")
 
 if __name__ == "__main__":
     main()
