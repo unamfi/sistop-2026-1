@@ -16,4 +16,4 @@ Se implementó la función "leer_superbloque" que:
 1. Abre el archivo ".img" en modo binario.
 2. Lee los primeros 54 bytes.
 3. Decodifica los valores ASCII y Little Endian (como se muestra en la asignación).
-4. Valida que el "Magic Number" sea "FiUnamFS" y la versión 26-2.
+4. Valida que el "Magic Number" sea "FiUnamFS" y la versión 26-2 (o 26-1, ya que cambia con respecto a la asignación).

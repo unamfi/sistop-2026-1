@@ -38,8 +38,8 @@ def leer_superbloque(ruta_archivo):
             print(f"Clusters de Directorio: {num_cluster_dir}")
             print(f"Clusters Totales: {num_cluster_total}")
             
-            #Validacion
-            if nombre_fs == "FiUnamFS" and version_fs == "26-2":
+            # Validacion: Aceptamos 26-2 o 26-1 (hay una diferencia con respecto a lo que venía en la asignación)
+            if nombre_fs == "FiUnamFS" and (version_fs == "26-2" or version_fs == "26-1"):
                 print("\n[Correcto] El sistema de archivos es VALIDO")
             else:
                 print("\n[Error] Sistema de archivos no reconocido (o versión incorrecta)")
