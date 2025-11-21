@@ -1,0 +1,9 @@
+# Archivos compilados de Python
+__pycache__/
+*.pyc
+
+
+# Archivos de prueba
+*.txt
+*.jpg
+*.png
