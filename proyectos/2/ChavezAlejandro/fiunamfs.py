@@ -60,66 +60,40 @@ def leer_superbloque(ruta_archivo):
 #==============================
 
 def listar_contenido(ruta_archivo):
-    #Recorre el directorio y muestra los archivos existentes en el sistema de archivos
+    #Devuelve una lista de diccionarios con la info de los archivos
     
-    #Se definen las constantes
-    #El directorio comienza en el cluster 1
-    #Tamanio de cluster: 1024 bytes (2 sectores de 512 bytes)
     tam_cluster = 1024
     inicio_directorio = tam_cluster * 1
-    
-    #El directorio ocupa 4 clusters consecutivos(1, 2, 3 y 4)
     fin_directorio = inicio_directorio + (tam_cluster * 4)
-    
-    #Cada entrada del directorio tiene una longitud fija de 64 bytes
     tam_entrada = 64
 
-    print(f"\n LISTADO DE ARCHIVOS ")
-    print(f"{'NOMBRE':<16} {'TAMAÑO':<10} {'CLUSTER INICIAL'}")
-    print("-" * 40)
+    archivos_encontrados = [] #Lista para guardar resultados
 
     try:
         with open(ruta_archivo, 'rb') as f:
-            #Se posiciona el puntero de lectura al inicio de la zona de directorio
             f.seek(inicio_directorio)
-            
-            #Se itera sobre el espacio reservado para el directorio hasta el final
             while f.tell() < fin_directorio:
                 entrada = f.read(tam_entrada)
+                if len(entrada) < tam_entrada: break
                 
-                #Se valida que se haya leído un bloque completo de 64 bytes.
-                if len(entrada) < tam_entrada:
-                    break
-                
-                #El primer byte indica el estado de la entrada.
-                tipo_archivo = chr(entrada[0])
-
-                #Se verifica si la entrada corresponde a un archivo valido
-                if tipo_archivo == '.':
-                    #Decodificación de la entrada:
-                    #Bytes 1-15: Nombre del archivo (ASCII)
-                    #Bytes 16-19: Cluster inicial (Little Endian)
-                    #Bytes 20-23: Tamanio del archivo (Little Endian)
-                    
+                if chr(entrada[0]) == '.':
                     raw_nombre = entrada[1:16]
-                    
-                    #Se decodifica y se limpian caracteres nulos o espacios para obtener el nombre "real"
-                    nombre = raw_nombre.decode('ascii', errors='ignore').strip().replace('\x00', '')
-                    
+                    nombre = raw_nombre.decode('ascii', errors='ignore').replace('\x00', '').strip()
                     cluster_inicial = struct.unpack('<I', entrada[16:20])[0]
                     tamano = struct.unpack('<I', entrada[20:24])[0]
                     
-                    print(f"{nombre:<16} {tamano:<10} {cluster_inicial}")
-                    
-                elif tipo_archivo == '-':
-                    #La entrada esta vacia/disponible (se ignora)
-                    pass
-                else:
-                    #Se ignoran entradas con datos no reconocidos
-                    pass
+                    #Se guarda en la lista
+                    archivos_encontrados.append({
+                        'nombre': nombre,
+                        'tamano': tamano,
+                        'cluster': cluster_inicial
+                    })
 
     except Exception as e:
-        print(f"Error al listar directorio: {e}")
+        print(f"Error al listar: {e}")
+        return []
+
+    return archivos_encontrados
 
 #==============================
 # TERCERA SECCION

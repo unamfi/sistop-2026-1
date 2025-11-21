@@ -1,13 +1,29 @@
 # Proyecto: (Micro) sistema de archivos FiUnamFS
 **Alumno:** B. Alejandro Chávez López
+**Materia:** Sistemas Operativos
 
 ## Descripción
 Este proyecto implementa un manipulador para el sistema de archivos FiUnamFS.
 El sistema debe permitir listar, copiar y eliminar archivos de una imagen de disco virtual (que se incluyó en la asignación).
 
+## Entorno y Dependencias
+Para ejecutar este proyecto se requiere un entorno con las siguientes características:
+
+* **Lenguaje:** Python 3 (Probado v3.13.9).
+* **Sistema Operativo:** Desarrollado en Fedora Linux 42.
+* **Bibliotecas:** * **Estándar:** "struct", "os", "sys", "threading", "queue", "datetime", "time".
+    * **Interfaz Gráfica:** "tkinter" incluida por defecto (Linux).
+
+### Instrucciones de Ejecución
+
+**Modo Interfaz Gráfica**
+1. Asegúrese de que "fiunamfs.img" debe estar en el directorio.
+2. Ejecutar: python3 interfaz.py
+
 ## Estructura del Proyecto
     -> fiunamfs.img: Imagen del disco virtual (sirve como simulación de hardware).
     -> fiunamfs.py: Script principal que implementa las funciones.
+    -> interfaz.py: Programa que lanza la interfaz gráfica (se siguen viendo las operaciones en la terminal)
     -> README.md: Este readme en markdown
 
 ## Avance
@@ -54,3 +70,6 @@ Se detectó y corrigió un error que permitía la creación de múltiples archiv
 Se integró un menú interactivo en bucle infinito que permite al usuario seleccionar las operaciones a realizar.
 1. Menú numérico para acceder a las funciones.
 2. En operaciones de escritura (copiar hacia el img) o borrado, el sistema muestra el estado del directorio "Antes" y "Después" de la operación para confirmar visualmente la acción.
+
+### GUI: Reemplazo de la CLI por una interfaz gráfica
+Se reemplazó la implementación de la CLI para interactuar con el programa por una GUI amigable y con colores llamativos
