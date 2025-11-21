@@ -24,7 +24,6 @@ from datetime import datetime
 # Identificadores del Superbloque
 FS_NAME = b'FiUnamFS'
 FS_VERSION = b'26-1' 
-
 FS_NAME_OFFSET = 0
 FS_NAME_LEN = 8
 FS_VERSION_OFFSET = 10

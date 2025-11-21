@@ -31,21 +31,13 @@ Para cumplir con el requisito de administración de procesos concurrente, se imp
   * Sistema Operativo: Windows, Linux o macOS.
   * Imagen del sistema de archivos (fiunamfs.img)
 
-## Explicación de Uso
-
-1.  Coloca el archivo de disco `fiunamfs.img` en la misma carpeta que el script.
-2.  Abre tu terminal y ejecuta:
-    ```bash
-    python Proyecto.py
-    ```
-3.  Verás un prompt `FiUnamFS>`. Ingresa los comandos deseados.
-
 ## Instrucciones de ejecución 
 Para ejecutar el programa, primero nos tendremos que posicionar sobre el directorio en el cual se encuentra tanto el archivo del proyecto, cómo la imágen del sistemas de archivos, una vez en esta zona, escribiremos el siguiente comando para ejecutar el programa
 
 ``` 
 python3 Proyecto.py
 ```
+Verás un prompt `FiUnamFS>`. Ingresa los comandos deseados.
 
 ## Guía de uso y comandos
 El programa cuenta con los siguientes comandos
