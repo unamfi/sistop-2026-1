@@ -33,8 +33,8 @@ para interpretar correctamente la estructura interna de FiUnamFS.
 | Leer contenido de un archivo | ✔ |
 | Copiar archivo desde FiUnamFS | ✔ |
 | Copiar archivo a FiUnamFS | ✔ |
-| Borrado lógico | ❌ |
-| Compactación | ❌ |
+| Borrado lógico | ✔ |
+| Compactación | ✔ |
 
 > Se irá actualizando conforme avance el desarrollo
 
@@ -145,5 +145,36 @@ Esta funcionalidad permite validar completamente la integridad del archivo dentr
 
 Con esto, se cumple el requerimiento del proyecto de copiar archivos del sistema de archivos FiUnamFS hacia el sistema operativo anfitrión.
 
+### 📌 Borrado lógico de archivos en FiUnamFS
+
+En este paso se implementó la capacidad de eliminar archivos del sistema de archivos FiUnamFS mediante un borrado lógico, sin alterar directamente los datos almacenados en los clusters.
+
+El procedimiento consiste en:
+
+1️⃣ Localizar la entrada del directorio correspondiente al archivo a borrar.  
+2️⃣ Modificar el primer byte del nombre del archivo, reemplazándolo por un punto `"."`, lo que indica que la entrada queda disponible para reutilización.  
+3️⃣ Los datos del archivo no se eliminan, pero el sistema deja de mostrarlo como archivo válido.  
+4️⃣ El espacio de almacenamiento ocupado por el archivo queda marcado implícitamente como disponible para futuros archivos.
+
+Esta técnica mantiene la integridad de la estructura del sistema de archivos sin necesidad de reacomodar inmediatamente los datos, y prepara el sistema para la futura funcionalidad de **compactación del espacio libre**.
 
 
+### 📌 Compactación del espacio en FiUnamFS
+
+Tras el proceso de borrado lógico, los clusters ocupados por archivos eliminados pueden generar fragmentación en la zona de datos del FS. Para evitarlo se implementó un algoritmo de compactación que:
+
+1️⃣ Recopila todas las entradas válidas del directorio  
+2️⃣ Ordena los archivos por su cluster actual  
+3️⃣ Mueve archivos a los primeros clusters disponibles  
+4️⃣ Actualiza en el directorio su nuevo cluster inicial  
+5️⃣ Libera clusters al final del FS
+
+Con este mecanismo se garantiza un uso más eficiente del espacio de almacenamiento y se minimizan los huecos entre archivos. Si al ejecutar la compactación no se detectan huecos, la estructura permanece sin cambios, preservando la integridad de los datos del FS.
+
+## Conclusión
+
+Este proyecto permitió comprender de manera práctica el funcionamiento y administración interna de un sistema de archivos. A través del acceso directo al almacenamiento, se analizaron y manipularon las estructuras fundamentales de **FiUnamFS**, logrando implementar operaciones esenciales como lectura, escritura, borrado lógico y compactación.
+
+Además del aprendizaje técnico, este trabajo refuerza conceptos clave de Sistemas Operativos como el manejo de clusters libres, fragmentación, consistencia del directorio y recuperación de datos. La implementación progresiva de cada paso favoreció un enfoque de desarrollo modular y una documentación clara del avance, asegurando la trazabilidad del proceso mediante control de versiones en GitHub.
+
+Con ello, se logró cumplir completamente los requerimientos del proyecto, obteniendo una herramienta funcional que permite gestionar archivos dentro de una imagen del sistema de archivos, simulando operaciones reales que forman parte del núcleo de un sistema operativo moderno.

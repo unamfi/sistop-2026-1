@@ -73,6 +73,26 @@ def leer_directorio(ruta_imagen, cluster_size, dir_clusters):
             entradas.append((nombre, tam, cluster_ini))
 
     return entradas
+#Leer entradas sin filtrar
+def leer_directorio_raw(ruta_imagen, cluster_size, dir_clusters):
+    entradas = []
+    
+    with open(ruta_imagen, "rb") as f:
+        inicio_directorio = cluster_size
+        total_entradas = (cluster_size * dir_clusters) // 64
+        
+        for i in range(total_entradas):
+            f.seek(inicio_directorio + i * 64)
+            entrada = f.read(64)
+            
+            nombre = entrada[0:15].decode("ascii", errors="ignore")
+            tam = struct.unpack("<I", entrada[16:20])[0]
+            cluster_ini = struct.unpack("<I", entrada[24:28])[0]
+            
+            #entradas.append((nombre.strip(), tam, cluster_ini))
+            entradas.append((nombre.strip("\x00 ").rstrip(), tam, cluster_ini))
+    
+    return entradas
 
 def leer_archivo(ruta_imagen, info, nombre_buscado):
     cluster_size = info["cluster_size"]
@@ -203,6 +223,79 @@ def copiar_de_fiunamfs(ruta_imagen, info, nombre_archivo_fs, nombre_destino_pc):
     print(f"Archivo '{nombre_archivo_fs}' exportado correctamente como '{nombre_destino_pc}'.")
     return True
 
+def borrar_archivo(ruta_imagen, info, nombre_buscado):
+    cluster_size = info['cluster_size']
+    dir_clusters = info['dir_clusters']
+
+    entradas_raw = leer_directorio_raw(ruta_imagen, cluster_size, dir_clusters)
+
+    # Buscar posición real exacta en el directorio
+    for i, (nombre, tam, cluster_ini) in enumerate(entradas_raw):
+        #if nombre == nombre_buscado:
+        if nombre.strip("\x00 ").rstrip() == nombre_buscado:
+            # Encontramos la entrada válida en el directorio
+            pos = cluster_size + (i * 64)
+
+            with open(ruta_imagen, "r+b") as img:
+                img.seek(pos)
+                img.write(b"." + b"\x00" * 14)
+            
+            print(f"Archivo '{nombre_buscado}' borrado lógicamente.")
+            return True
+
+    print(f"ERROR: El archivo '{nombre_buscado}' no existe en el FS.")
+    return False
+
+def compactar(ruta_imagen, info):
+    cluster_size = info["cluster_size"]
+    dir_clusters = info["dir_clusters"]
+    
+    # Leer entradas válidas y ordenar por cluster
+    entradas = leer_directorio(ruta_imagen, cluster_size, dir_clusters)
+    entradas.sort(key=lambda x: x[2])  # ordenar por cluster inicial
+
+    primer_cluster_libre = 1 + dir_clusters
+
+    with open(ruta_imagen, "r+b") as img:
+        for nombre, tam, cluster_ini in entradas:
+            if cluster_ini > primer_cluster_libre:
+                # Leer contenido del archivo
+                img.seek(cluster_ini * cluster_size)
+                data = img.read(tam)
+
+                # Moverlo al primer cluster libre
+                img.seek(primer_cluster_libre * cluster_size)
+                img.write(data)
+
+                # Limpiar cluster viejo
+                img.seek(cluster_ini * cluster_size)
+                img.write(b"\x00" * tam)
+
+                # Actualizar el directorio
+                actualizar_cluster_directorio(img, nombre, primer_cluster_libre, info)
+
+            primer_cluster_libre += math.ceil(tam / cluster_size)
+
+    print("Compactación completada.")
+
+#funcion auxiliar para actualizar el directorio
+def actualizar_cluster_directorio(img, nombre_buscado, nuevo_cluster, info):
+    cluster_size = info["cluster_size"]
+    dir_clusters = info["dir_clusters"]
+
+    inicio_directorio = cluster_size
+    total_entradas = (cluster_size * dir_clusters) // 64
+
+    for i in range(total_entradas):
+        pos = inicio_directorio + i * 64
+        img.seek(pos)
+        nombre = img.read(15).decode("ascii", errors="ignore").strip("\x00 ").rstrip()
+        
+        if nombre == nombre_buscado:
+            img.seek(pos + 24)
+            img.write(struct.pack("<I", nuevo_cluster))
+            return 
+
 def main():
     if len(sys.argv) != 2:
         print("Uso: python fiunamfs_info.py <imagen_fiunamfs>")
@@ -243,7 +336,8 @@ def main():
         for nombre, tam, cluster in entradas:
             print(f"{nombre:20}  {tam:10} bytes  Cluster: {cluster}")
 
-    """# ===== Prueba de lectura de archivo =====
+    #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    # ===== Prueba de lectura de archivo =====
     nombre_prueba = "hola.txt"
     contenido = leer_archivo(ruta_imagen, info, nombre_prueba)
 
@@ -255,9 +349,11 @@ def main():
         try:
             print(contenido.decode("ascii", errors="ignore"))
         except:
-            print("No se pudo mostrar como texto.")"""
+            print("No se pudo mostrar como texto.")
 
-    """# ===== Copiar archivo de prueba al FS =====
+    #Las siguientes partes de código se activaran o desactivaron según la accion que se desea hacer
+    #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><
+    # ===== Copiar archivo de prueba al FS =====
     print("\n=== Copiar archivo de prueba ===")
     archivo_local = "hola.txt"
     nombre_dest = "hola.txt"
@@ -265,8 +361,9 @@ def main():
     if copiar_a_fiunamfs(ruta_imagen, info, archivo_local, nombre_dest):
         print("Verifique con el listado del directorio.")
     else:
-        print("No se pudo copiar el archivo.")"""
+        print("No se pudo copiar el archivo.")
 
+    #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><>>>>>>>>>>>>>>>>>>
     # ===== Exportar archivo a PC =====
     print("\n=== Exportar archivo desde el FS ===")
     
@@ -277,6 +374,25 @@ def main():
         print("Exportación completada.")
     else:
         print("No se pudo exportar el archivo.")
+
+    #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    #BORRADO DE ARCHIVO DESEADO
+    print("\n=== Borrar archivo ===")
+    archivo_a_borrar = "datos2.txt"
+
+    if borrar_archivo(ruta_imagen, info, archivo_a_borrar):
+        print("Borrado realizado, verificar nuevamente con listado.")
+    else:
+        print("No se pudo borrar el archivo.")
+    #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    #COMPACTACION
+    print("\n=== Compactando FS ===")
+    compactar(ruta_imagen, info)
+
+    print("\n=== Directorio tras compactación ===")
+    entradas = leer_directorio(ruta_imagen, info["cluster_size"], info["dir_clusters"])
+    for nombre, tam, cluster in entradas:
+        print(f"{nombre:20} {tam:10} bytes Cluster: {cluster}")
 
 if __name__ == "__main__":
     main()
