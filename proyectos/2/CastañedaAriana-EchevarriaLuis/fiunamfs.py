@@ -1,3 +1,15 @@
+"""
+Módulo Backend para el sistema de archivos FiUnamFS (v26-1).
+
+Este script implementa la lógica de bajo nivel para manipular imágenes de disco
+que siguen la especificación FiUnamFS. Incluye una clase controladora (FiUnamFS)
+que encapsula el estado del sistema, validaciones de versión y operaciones
+atómicas (lectura/escritura) protegidas por hilos.
+
+Autor: Castañeda Ariana, Echevarria Luis
+Materia: Sistemas Operativos
+"""
+
 import argparse  
 import struct    
 import os
@@ -14,11 +26,10 @@ from types import SimpleNamespace
 SUPERBLOCK_CLUSTER = 0   
 SUPERBLOCK_SIZE = 512   
 EXPECTED_IDENT = b'FiUnamFS'
-# Versión oficial estricta
 EXPECTED_VERSION = b'26-1' 
 FREE_ENTRY_NAME = b'.' * 15
 
-# Offsets
+# Offsets (posiciones de bytes) dentro del Superbloque
 OFF_IDENT = 0; LEN_IDENT = 9
 OFF_VERSION = 10; LEN_VERSION = 5
 OFF_LABEL = 20; LEN_LABEL = 16
@@ -36,10 +47,22 @@ work_queue = Queue()
 
 class FiUnamFS:
     """
-    Controlador principal del sistema de archivos FiUnamFS.
-    Encapsula la lógica de acceso, validación y manipulación de la imagen de disco.
+    Controlador del sistema de archivos. 
+    
+    Esta clase encapsula el acceso a la imagen de disco, garantizando que todas
+    las operaciones sean seguras (thread-safe) y consistentes.
     """
     def __init__(self, img_path):
+        """
+        Inicializa el controlador montando la imagen especificada.
+        
+        Argumentos:
+            img_path (str): Ruta al archivo .img
+            
+        Lanza:
+            FileNotFoundError: Si la imagen no existe.
+            ValueError: Si la versión o identificador del FS son incorrectos.
+        """
         self.img_path = img_path
         self.lock = Lock()
         self.valid = False
@@ -60,11 +83,16 @@ class FiUnamFS:
         self.valid = True
 
     def _read_superblock(self, f):
-        """Lee y parsea el superbloque."""
+        """
+        Lee los 512 bytes del superbloque y decodifica sus campos.
+        """
         f.seek(SUPERBLOCK_CLUSTER * SUPERBLOCK_SIZE)
         data = f.read(SUPERBLOCK_SIZE)
         
         def read_u32(offset):
+            """
+            Helper para leer enteros de 32 bits Little Endian (<I).
+            """
             return struct.unpack_from('<I', data, offset)[0]
 
         return {
@@ -77,14 +105,19 @@ class FiUnamFS:
         }
 
     def _validate_version(self):
-        """Verifica estrictamente la versión 26-1."""
+        """
+        Verifica que la imagen sea versión 26-1 para evitar corrupción.
+        """
         if self.sb['ident'] != EXPECTED_IDENT:
             raise ValueError(f"Identificador inválido: {self.sb['ident']}")
         if self.sb['version'] != EXPECTED_VERSION:
             raise ValueError(f"Versión inválida: {self.sb['version'].decode()}. Se requiere {EXPECTED_VERSION.decode()}.")
 
     def _parse_directory(self, f):
-        """Lee todas las entradas del directorio."""
+        """
+        Escanea el área de directorio y parsea cada entrada de 64 bytes.
+        Retorna una lista de diccionarios con la metadata de cada archivo.
+        """
         dir_offset = 1 * self.cluster_size
         dir_size = self.dir_clusters * self.cluster_size
         f.seek(dir_offset)
@@ -124,17 +157,24 @@ class FiUnamFS:
         return entries
 
     def _parse_ts(self, s):
-        """Helper para fechas."""
+        """
+        Convierte cadena AAAAMMDDHHMMSS a objeto datetime para fechas.
+        """
         if len(s) >= 14 and s.isdigit():
             try: return datetime.datetime.strptime(s[:14], '%Y%m%d%H%M%S')
             except: pass
         return s
 
     def _format_ts(self, dt):
+        """
+        Convierte objeto datetime a cadena de bytes para escritura.
+        """
         return dt.strftime('%Y%m%d%H%M%S').encode('ascii')[:14]
 
     def create_backup(self):
-        """Genera respaldo .bak de seguridad."""
+        """
+        Genera una copia de seguridad .bak antes de operaciones destructivas.
+        """
         bak = self.img_path + '.bak'
         with self.lock:
             try:
@@ -143,10 +183,13 @@ class FiUnamFS:
             except Exception as e:
                 print(f"[Backup Error] {e}")
 
-    # --- MÉTODOS PÚBLICOS ---
+    # --- MÉTODOS PÚBLICOS (Interfaz para el exterior) ---
 
     def list_files(self):
-        """Devuelve lista de archivos activos (filtrados)."""
+        """
+        Retorna la lista de archivos activos en el directorio.
+        Filtra entradas vacías o marcadas como borradas.
+        """
         with self.lock:
             with open(self.img_path, 'rb') as f:
                 entries = self._parse_directory(f)
@@ -155,7 +198,9 @@ class FiUnamFS:
                 if not e['is_unused'] and e['name'] != '--------------' and e['name'] != '...............']
 
     def read_file(self, filename, out_path):
-        """Extrae un archivo del sistema."""
+        """
+        Busca un archivo por nombre y extrae su contenido al sistema local.
+        """
         with self.lock:
             with open(self.img_path, 'rb') as f:
                 entries = self._parse_directory(f)
@@ -172,7 +217,10 @@ class FiUnamFS:
             print(f"Archivo {filename} extraído correctamente → {out_path}")
 
     def write_file(self, src_path, dest_name):
-        """Inserta un archivo en el sistema."""
+        """
+        Importa un archivo local al sistema FiUnamFS.
+        Maneja la búsqueda de espacio contiguo y actualización del directorio.
+        """
         if len(dest_name) > NAME_LEN:
             raise ValueError(f"El nombre de destino '{dest_name}' excede {NAME_LEN - 1} caracteres.")
             
@@ -180,13 +228,12 @@ class FiUnamFS:
         with open(src_path, 'rb') as f:
             data = f.read()
 
-        self.create_backup() # Backup automático
+        self.create_backup()
 
         with self.lock:
             with open(self.img_path, 'r+b') as f:
                 entries = self._parse_directory(f)
                 
-                # Validaciones
                 if any(not e['is_unused'] and e['name'] == dest_name for e in entries):
                     raise FileExistsError(f"El archivo '{dest_name}' ya existe.")
                 
@@ -213,7 +260,6 @@ class FiUnamFS:
                 if target_cluster + needed_clusters > self.total_clusters:
                     raise OSError("Espacio insuficiente en disco.")
 
-                # Escribir datos
                 f.seek(target_cluster * self.cluster_size)
                 # Padding con ceros al final del cluster
                 padding = (needed_clusters * self.cluster_size) - len(data)
@@ -226,7 +272,6 @@ class FiUnamFS:
                 name_bytes = dest_name.encode('ascii').ljust(NAME_LEN, b'\x00')
                 now = self._format_ts(datetime.datetime.now())
                 
-                # Estructura: Tipo(-) + Nombre + Cluster + Size + Dates + Padding
                 new_entry = b'-' + name_bytes + \
                             struct.pack('<I', target_cluster) + \
                             struct.pack('<I', file_size) + \
@@ -237,7 +282,9 @@ class FiUnamFS:
         print(f"Archivo {src_path} escrito como {dest_name} en cluster {target_cluster} (tamaño {file_size} bytes).")
 
     def delete_file(self, filename):
-        """Elimina un archivo."""
+        """
+        Marca un archivo como eliminado liberando su entrada en el directorio.
+        """
         self.create_backup()
         
         with self.lock:
@@ -248,11 +295,10 @@ class FiUnamFS:
                 if not found:
                     raise FileNotFoundError(f"Archivo '{filename}' no encontrado.")
                 
-                # Marcar como borrado
                 offset = (1 * self.cluster_size) + (found['index'] * ENTRY_SIZE)
                 f.seek(offset)
                 
-                # Patrón de borrado seguro (limpiando referencias)
+                # Patrón de borrado seguro
                 empty_entry = b'\x2f' + FREE_ENTRY_NAME + \
                               struct.pack('<I', 0) + struct.pack('<I', 0) + \
                               b'0'*14 + b'0'*14 + \
@@ -261,10 +307,13 @@ class FiUnamFS:
                 f.flush(); os.fsync(f.fileno())
         print(f"Archivo {filename} eliminado correctamente (entrada {found['index']} marcada como libre).")
 
-# -------------------- Hilo Worker --------------------
+# -------------------- WORKER (Concurrencia) --------------------
 
 def worker_wrapper(fs_instance):
-    """Consume tareas de la cola y ejecuta métodos de la instancia fs."""
+    """
+    Hilo consumidor que procesa tareas de la cola.
+    Permite que las operaciones pesadas no bloqueen la interfaz principal.
+    """
     while True:
         task = work_queue.get()
         if task is None:
@@ -283,11 +332,13 @@ def worker_wrapper(fs_instance):
         finally:
             work_queue.task_done()
 
-# -------------------- Comandos CLI --------------------
+# -------------------- CLI & UTILS --------------------
 
 def cmd_info(args):
+    """
+    Comando CLI: Muestra información del superbloque.
+    """
     try:
-        # Al instanciar, se valida automáticamente
         fs = FiUnamFS(args.image)
         print(f"Ident: {fs.sb['ident'].decode()}")
         print(f"Version: {fs.sb['version'].decode()}")
@@ -301,6 +352,9 @@ def cmd_info(args):
         print(f"ERROR: {e}")
 
 def cmd_list(args):
+    """
+    Comando CLI: Lista archivos en consola.
+    """
     try:
         fs = FiUnamFS(args.image) # Esto valida 26-1 estrictamente
         files = fs.list_files()
@@ -312,7 +366,9 @@ def cmd_list(args):
         print(f"ERROR: No se pudo listar. {e}", file=sys.stderr)
 
 def _launch_worker(args):
-    """Helper para comandos asíncronos."""
+    """
+    Inicializa el hilo worker para comandos CLI asíncronos.
+    """
     try:
         fs = FiUnamFS(args.image)
         t = Thread(target=worker_wrapper, args=(fs,), daemon=True)
@@ -322,6 +378,7 @@ def _launch_worker(args):
         print(f"ERROR INICIALIZANDO FS: {e}", file=sys.stderr)
         sys.exit(1)
 
+# Funciones puente para argumentos CLI
 def cmd_copyout(args):
     t = _launch_worker(args)
     work_queue.put({'op':'copyout', 'name':args.name, 'outpath':args.out})
@@ -341,7 +398,10 @@ def cmd_delete(args):
     work_queue.join(); work_queue.put(None); t.join()
 
 def cmd_makecopy26(args):
-    """Herramienta estática de reparación."""
+    """
+    Herramienta de reparación: Crea una copia de la imagen y fuerza
+    la versión 26-1 en el superbloque.
+    """
     src, dst = args.src, args.dst
     if not os.path.exists(src): print(f"ERROR: El archivo fuente {src} no existe.", file=sys.stderr); return
     if os.path.exists(dst): print(f"El archivo destino {dst} ya existe.", file=sys.stderr); return
