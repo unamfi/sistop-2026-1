@@ -1,3 +1,7 @@
+# Proyecto: Microsistema de archivos FiUnamFS
+# Materia: Sistemas Operativos
+# Alumno: Maya Torres Bruno
+
 import os
 import struct
 import threading
