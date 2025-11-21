@@ -78,6 +78,35 @@ En esta etapa del proyecto se implementó la funcionalidad necesaria para leer e
 - Se muestra un mensaje indicando que no fue encontrado
 
 Actualmente, la imagen del sistema de archivos contiene únicamente entradas vacías, por lo que se espera la salida:
+El archivo 'archivo.txt' no se encontró en el FS.
+
+### 📌  Copiar un archivo desde la PC hacia FiUnamFS
+
+En este paso se implementó la funcionalidad para agregar un nuevo archivo al sistema de archivos FiUnamFS. La operación realizada permite tomar un archivo existente en la computadora y almacenarlo dentro de la imagen del sistema.
+
+Para lograrlo, el programa realiza los siguientes procedimientos:
+
+1️⃣ **Lectura del archivo local**  
+Se abre el archivo seleccionado desde el sistema operativo anfitrión y se obtiene su tamaño en bytes.
+
+2️⃣ **Búsqueda de una entrada libre en el directorio**  
+Se recorre la región del directorio (clusters 1–3) buscando un espacio disponible para registrar el nuevo archivo.
+
+3️⃣ **Asignación de un cluster de datos**  
+En esta primera versión se asigna de manera sencilla el primer cluster disponible después de los clusters del directorio.
+
+4️⃣ **Escritura en la imagen del FS**  
+- Se copia el contenido del archivo al cluster asignado
+- Se actualiza la entrada del directorio con:
+  - Nombre del archivo (máximo 15 bytes)
+  - Tamaño en bytes
+  - Número de cluster inicial
+
+5️⃣ **Validación posterior**  
+Se utilizó la funcionalidad del paso 3 para comprobar que el archivo se puede leer correctamente desde el FiUnamFS.
+
+Esta implementación cumple correctamente con el requerimiento de **copiar archivos desde la PC hacia el sistema de archivos**, y sienta las bases para funcionalidades más avanzadas en pasos siguientes como manejo real de clusters libres, archivos mayores a 1 cluster y control de entradas duplicadas.
+
 
 
 

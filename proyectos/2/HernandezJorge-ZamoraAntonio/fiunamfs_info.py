@@ -80,7 +80,8 @@ def leer_archivo(ruta_imagen, info, nombre_buscado):
     entradas = leer_directorio(ruta_imagen, cluster_size, info["dir_clusters"])
 
     for nombre, tam, cluster_ini in entradas:
-        if nombre == nombre_buscado:
+        #if nombre == nombre_buscado:
+        if nombre.startswith(nombre_buscado):
             with open(ruta_imagen, "rb") as f:
                 # Posición física del archivo dentro de la imagen
                 pos = cluster_ini * cluster_size
@@ -90,6 +91,72 @@ def leer_archivo(ruta_imagen, info, nombre_buscado):
                 return contenido
 
     return None
+
+def buscar_entrada_libre(ruta_imagen, cluster_size, dir_clusters):
+    with open(ruta_imagen, "rb") as f:
+        inicio_directorio = cluster_size
+        f.seek(inicio_directorio)
+
+        total_entradas = (cluster_size * dir_clusters) // 64
+
+        for i in range(total_entradas):
+            pos = inicio_directorio + (i * 64)
+            f.seek(pos)
+            nombre = f.read(15).decode("ascii", errors="ignore")
+
+            if nombre.startswith(".") or nombre.strip() == "":
+                return i  # índice de entrada libre
+
+    return -1  # No hay espacio
+
+def copiar_a_fiunamfs(ruta_imagen, info, archivo_local, nombre_destino):
+    cluster_size = info['cluster_size']
+
+    # Leer archivo desde la PC
+    with open(archivo_local, "rb") as f:
+        data = f.read()
+
+    tam = len(data)
+    if tam > cluster_size:
+        print("ERROR: El archivo es demasiado grande (solo soporta <=1 cluster por ahora).")
+        return False
+
+    # Buscar entrada de directorio libre
+    entrada_idx = buscar_entrada_libre(ruta_imagen, cluster_size, info['dir_clusters'])
+    if entrada_idx == -1:
+        print("ERROR: No hay espacio en el directorio.")
+        return False
+
+    # Para este paso: usaremos el primer cluster libre después del directorio
+    cluster_ini = 1 + info['dir_clusters']
+
+    with open(ruta_imagen, "r+b") as img:
+        # 1️⃣ Escribir contenido del archivo en la ubicación del cluster
+        img.seek(cluster_ini * cluster_size)
+        img.write(data)
+
+        # 2️⃣ Actualizar entrada del directorio
+        inicio_directorio = cluster_size
+        pos_entrada = inicio_directorio + (entrada_idx * 64)
+        img.seek(pos_entrada)
+
+        # Nombre (15 bytes) — pad con espacios
+        nombre_bytes = nombre_destino.ljust(15, "\x00").encode("ascii")
+        img.write(nombre_bytes)
+
+        # Byte 15: reservado (no lo tocamos)
+        img.seek(pos_entrada + 16)
+
+        # Tamaño
+        img.write(struct.pack("<I", tam))
+
+        # Cluster inicial
+        img.seek(pos_entrada + 24)
+        img.write(struct.pack("<I", cluster_ini))
+
+    print(f"Archivo '{nombre_destino}' copiado exitosamente al FS.")
+    return True
+
 
 def main():
     if len(sys.argv) != 2:
@@ -132,7 +199,7 @@ def main():
             print(f"{nombre:20}  {tam:10} bytes  Cluster: {cluster}")
 
     # ===== Prueba de lectura de archivo =====
-    nombre_prueba = "archivo.txt"
+    nombre_prueba = "hola.txt"
     contenido = leer_archivo(ruta_imagen, info, nombre_prueba)
 
     print("\n=== Lectura de archivo de prueba ===")
@@ -144,6 +211,16 @@ def main():
             print(contenido.decode("ascii", errors="ignore"))
         except:
             print("No se pudo mostrar como texto.")
+
+    """# ===== Copiar archivo de prueba al FS =====
+    print("\n=== Copiar archivo de prueba ===")
+    archivo_local = "hola.txt"
+    nombre_dest = "hola.txt"
+
+    if copiar_a_fiunamfs(ruta_imagen, info, archivo_local, nombre_dest):
+        print("Verifique con el listado del directorio.")
+    else:
+        print("No se pudo copiar el archivo.")"""
 
 if __name__ == "__main__":
     main()
