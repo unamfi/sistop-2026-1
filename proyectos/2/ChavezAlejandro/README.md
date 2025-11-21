@@ -49,3 +49,8 @@ Se detectó y corrigió un error que permitía la creación de múltiples archiv
 1. Se añadió una seccion de validación en la función "copiar_a_fiunamfs" para evitar duplicados.
 2. El sistema ahora verifica si hay un archivo con el mismo nombre en el directorio antes de iniciar la asignación de espacio o los hilos de transferencia.
 3. Se añadió una seccion de validación en la función "copiar_a_fiunamfs" para evitar que el nombre del archivo a copiar tenga una longitud >15 caracteres (puede corromper archivos al cortar sus nombres a <15 caracteres).
+
+### Fase Final: Interfaz de Usuario (CLI)
+Se integró un menú interactivo en bucle infinito que permite al usuario seleccionar las operaciones a realizar.
+1. Menú numérico para acceder a las funciones.
+2. En operaciones de escritura (copiar hacia el img) o borrado, el sistema muestra el estado del directorio "Antes" y "Después" de la operación para confirmar visualmente la acción.

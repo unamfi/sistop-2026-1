@@ -499,25 +499,73 @@ def eliminar_archivo(ruta_fs, nombre_objetivo):
     except Exception as e:
         print(f"Error al eliminar archivo: {e}")
 
+def mostrar_menu():
+
+    print("\n" + "="*30)
+    print("   SISTEMA DE ARCHIVOS FIUNAMFS")
+    print("="*30)
+    print("1. Listar contenidos del directorio")
+    print("2. Copiar archivo DE FiUnamFS A tu PC")
+    print("3. Copiar archivo DE tu PC A FiUnamFS")
+    print("4. Eliminar archivo del FiUnamFS")
+    print("5. Salir")
+    print("-" * 30)
+
 if __name__ == "__main__":
     archivo_img = "fiunamfs.img"
     
+    #Validacion inicial del sistema
+    #Si el superbloque no es valido no tiene caso continuar
+    print("Iniciando sistema")
     leer_superbloque(archivo_img)
     
-    print("\n ESTADO INICIAL ")
-    listar_contenido(archivo_img)
-    
-    #se copia prueba.txt
-    archivo_local = "prueba.txt"
-
-    copiar_a_fiunamfs(archivo_img, archivo_local)
-    
-    print("\n DESPUES DE COPIAR ")
-    listar_contenido(archivo_img)
-    
-    #se elimina prueba.txt
-
-    eliminar_archivo(archivo_img, archivo_local)
-    
-    print("\n DESPUES DE ELIMINAR ")
-    listar_contenido(archivo_img)
+    while True:
+        mostrar_menu()
+        opcion = input("Selecciona una opcion: ").strip()
+        
+        if opcion == "1":
+            #Opcion Listar
+            listar_contenido(archivo_img)
+            
+        elif opcion == "2":
+            #Opcion Extraer (FS -> PC)
+            #Primero se muestra que hay disponible
+            listar_contenido(archivo_img)
+            nombre = input("\nNombre del archivo a copiar hacia tu PC: ")
+            copiar_de_fiunamfs(archivo_img, nombre)
+            
+        elif opcion == "3":
+            #Opcion Importar (PC -> FS)
+            print("\n ESTADO ACTUAL DEL IMG ")
+            listar_contenido(archivo_img)
+            
+            ruta_local = input("\nNombre del archivo local a copiar hacia FiUnamFS: ")
+            
+            #Se hace la copia
+            copiar_a_fiunamfs(archivo_img, ruta_local)
+            
+            #Se muestra el resultado
+            print("\n ESTADO FINAL DEL IMG ")
+            listar_contenido(archivo_img)
+            
+        elif opcion == "4":
+            #Opcion Eliminar
+            print("\n ESTADO ACTUAL DEL IMG ")
+            listar_contenido(archivo_img)
+            
+            nombre = input("\nNombre del archivo a eliminar del FiUnamFS: ")
+            
+            #Se ejecuta la eliminacion
+            eliminar_archivo(archivo_img, nombre)
+            
+            #Se muestra el resultado
+            print("\n ESTADO FINAL DEL IMG ")
+            listar_contenido(archivo_img)
+            
+        elif opcion == "5":
+            #Opcion Salir
+            print("\nCerrando sistema. Hasta luego :)")
+            break
+            
+        else:
+            print("\n[Error] Opcion no valida :(")
