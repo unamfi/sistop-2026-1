@@ -556,3 +556,93 @@ class FiUnamFS_GUI(tk.Tk):
         """ Muestra el error en la GUI """
         messagebox.showerror("Error de Operación", str(error))
         self.info_label.config(text=f"Error cargando FS: {error}", foreground="red")
+
+# -----------------------------------------------------
+    # Funciones de Operación (Comandos de botón)
+    # -----------------------------------------------------
+
+    def _actualizar_treeview(self, archivos):
+        """ Limpia y llena el Treeview con los datos del directorio """
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        
+        if not archivos:
+            self.tree.insert('', 'end', values=('-', '< Directorio Vacío >', '', '', '', ''))
+        else:
+            for a in archivos:
+                 self.tree.insert('', 'end', values=(
+                    a['tipo_show'], 
+                    a['Nombre'], 
+                    a['Tamaño'], 
+                    a['Cluster Inicial'], 
+                    a['Fecha Creación'], 
+                    a['Fecha Modificación']
+                ))
+
+    def cmd_listar(self, silencioso=False):
+        """ Muestra el listado de archivos en el Treeview """
+        if not silencioso:
+            self.ejecutar_tarea_con_animacion(self.operaciones.listar)
+        else:
+            try:
+                archivos = self.operaciones.listar()
+                self._actualizar_treeview(archivos)
+            except Exception as e:
+                self._manejar_error(e)
+
+
+    def cmd_copiar_a_pc(self):
+        """ Diálogo y ejecución de Copiar a PC (Exportar) """
+        seleccion = self.tree.focus()
+        if not seleccion:
+            messagebox.showwarning("Exportar", "Seleccione un archivo de la lista para exportar.")
+            return
+
+        item = self.tree.item(seleccion, 'values')
+        nombre_fiunam = item[1]
+
+        if nombre_fiunam in ('< Directorio Vacío >', ''):
+            messagebox.showwarning("Exportar", "Seleccione un archivo válido.")
+            return
+
+        # Pedir ruta local de destino
+        ruta_local = filedialog.asksaveasfilename(
+            title=f"Guardar archivo '{nombre_fiunam}' en...",
+            initialfile=nombre_fiunam,
+            defaultextension=".*"
+        )
+        if ruta_local:
+            self.ejecutar_tarea_con_animacion(self.operaciones.copiar_a_pc, nombre_fiunam, ruta_local)
+
+    def cmd_copiar_a_fiunam(self):
+        """ Diálogo y ejecución de Copiar a FiUnamFS (Importar) """
+        ruta_origen = filedialog.askopenfilename(
+            title="Seleccionar archivo local para importar",
+            filetypes=[("Todos los archivos", "*.*")]
+        )
+        if ruta_origen:
+            self.ejecutar_tarea_con_animacion(self.operaciones.copiar_a_fiunam, ruta_origen)
+
+    def cmd_eliminar(self):
+        """ Diálogo y ejecución de Eliminar Archivo """
+        seleccion = self.tree.focus()
+        if not seleccion:
+            messagebox.showwarning("Eliminar", "Seleccione un archivo de la lista para eliminar.")
+            return
+
+        item = self.tree.item(seleccion, 'values')
+        nombre_fiunam = item[1]
+
+        if nombre_fiunam in ('< Directorio Vacío >', ''):
+            messagebox.showwarning("Eliminar", "Seleccione un archivo válido.")
+            return
+
+        if messagebox.askyesno("Confirmar Eliminación", f"¿Está seguro de que desea eliminar '{nombre_fiunam}' de FiUnamFS?"):
+            self.ejecutar_tarea_con_animacion(self.operaciones.eliminar, nombre_fiunam)
+
+# -----------------------------------------------------
+# MAIN con Tkinter
+# -----------------------------------------------------
+if __name__ == "__main__":
+    app = FiUnamFS_GUI(ARCHIVO_IMAGEN)
+    app.mainloop()
