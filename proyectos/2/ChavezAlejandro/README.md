@@ -31,3 +31,9 @@ Se implementó la función "copiar_de_fiunamfs" que:
 2. Hace una limpieza de caracteres nulos y espacios en blanco del nombre almacenado para evitar problemas de reconocimiento (esto pasaba, ya que el nombre del archivo en el FS contenía espacios que conlfictuaban con la entrada del usuario).
 3. Obtiene el cluster inicial y el tamaño del archivo desde la entrada de directorio.
 4. Calcula el offset y genera un archivo local con el contenido extraído ()byte a byte).
+
+### Fase 4: Copiado hacia FiUnamFS (Multihilo)
+Se implementó la función "copiar_a_fiunamfs" que:
+1. Revisa el directorio existente para mapear clusters ocupados y encontrar un bloque libre contiguo.
+2. Usa el patrón productor-consumidor con dos hilos y una cola sincronizada para transferir los datos del archivo local al img.
+3. Genera una nueva entrada de directorio con los metadatos (nombre, tamaño, clusters, fechas).
