@@ -6,7 +6,9 @@ import queue
 import datetime
 import time
 
+#==============================
 # PRIMERA SECCION DEL PROYECTO
+#==============================
 
 def leer_superbloque(ruta_archivo):
 
@@ -53,8 +55,9 @@ def leer_superbloque(ruta_archivo):
     except Exception as e:
         print(f"Error inesperado: {e}")
 
-
+#==============================
 # SEGUNDA SECCION
+#==============================
 
 def listar_contenido(ruta_archivo):
     #Recorre el directorio y muestra los archivos existentes en el sistema de archivos
@@ -118,7 +121,9 @@ def listar_contenido(ruta_archivo):
     except Exception as e:
         print(f"Error al listar directorio: {e}")
 
+#==============================
 # TERCERA SECCION
+#==============================
 
 def copiar_de_fiunamfs(ruta_fs, nombre_objetivo):
     #Se busca un archivo por nombre en el FS y se copia al directorio actual
@@ -188,8 +193,9 @@ def copiar_de_fiunamfs(ruta_fs, nombre_objetivo):
     except Exception as e:
         print(f"Error al copiar archivo: {e}")
 
-
+#==============================
 # SECCION 4: ESCRITURA Y CONCURRENCIA
+#==============================
 
 #  AUXILIARES 
 
@@ -396,17 +402,85 @@ def copiar_a_fiunamfs(ruta_fs, ruta_archivo_local):
     except Exception as e:
         print(f"Error al escribir en disco: {e}")
 
+#==============================
+# QUINTA SECCION
+#==============================
+
+def eliminar_archivo(ruta_fs, nombre_objetivo):
+    #Busca un archivo y lo marca como eliminado en el directorio
+    
+    tam_cluster = 1024
+    inicio_directorio = tam_cluster * 1
+    fin_directorio = inicio_directorio + (tam_cluster * 4)
+    tam_entrada = 64
+    
+    #Se limpia el nombre input
+    nombre_objetivo = nombre_objetivo.strip()
+    
+    print(f"\n INTENTANDO ELIMINAR: '{nombre_objetivo}' ")
+    
+    try:
+        with open(ruta_fs, 'r+b') as f:
+            f.seek(inicio_directorio)
+            
+            archivo_encontrado = False
+            
+            while f.tell() < fin_directorio:
+                posicion_actual = f.tell()
+                entrada = f.read(tam_entrada)
+                if len(entrada) < tam_entrada:
+                    break
+                
+                tipo = chr(entrada[0])
+                
+                if tipo == '.':
+                    raw_nombre = entrada[1:16]
+                    nombre_limpio = raw_nombre.decode('ascii', errors='ignore').replace('\x00', '').strip()
+                    
+                    if nombre_limpio == nombre_objetivo:
+                        #Se encuentra el archivo a eliminar
+                        
+                        #Se regresa el puntero al inicio de esta entrada
+                        f.seek(posicion_actual)
+                        
+                        #Se prepara la marca de borrado
+                        byte_tipo = b'-'
+                        byte_nombre = b'.' * 15
+                        
+                        #Se escribe la marca de borrado sobre la entrada existente
+                        f.write(byte_tipo)
+                        f.write(byte_nombre)
+                    
+                        
+                        print(f"[Exito] El archivo '{nombre_objetivo}' ha sido eliminado")
+                        archivo_encontrado = True
+                        break
+            
+            if not archivo_encontrado:
+                print(f"[Error] No se puede eliminar: El archivo '{nombre_objetivo}' porque no existe")
+                
+    except Exception as e:
+        print(f"Error al eliminar archivo: {e}")
 
 if __name__ == "__main__":
-    leer_superbloque("fiunamfs.img")
+    archivo_img = "fiunamfs.img"
+    
+    leer_superbloque(archivo_img)
+    
+    print("\n ESTADO INICIAL ")
+    listar_contenido(archivo_img)
+    
+    #se copia prueba.txt
+    archivo_local = "prueba.txt"
 
-    #Listado inicial
-    listar_contenido("fiunamfs.img")
+    copiar_a_fiunamfs(archivo_img, archivo_local)
+    
+    print("\n DESPUES DE COPIAR ")
+    listar_contenido(archivo_img)
+    
+    #se elimina prueba.txt
 
-    #Copiar algo de la PC al fiunamfs
-    archivo_local = input("\nNombre de archivo local para copiar: ")
-    copiar_a_fiunamfs("fiunamfs.img", archivo_local)
-
-    #Se lista de nuevo para ver si aparecio
-    print("\n VERIFICACION ")
-    listar_contenido("fiunamfs.img")
+    eliminar_archivo(archivo_img, archivo_local)
+    
+    print("\n DESPUES DE ELIMINAR ")
+    listar_contenido(archivo_img)

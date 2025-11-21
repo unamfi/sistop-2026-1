@@ -37,3 +37,9 @@ Se implementó la función "copiar_a_fiunamfs" que:
 1. Revisa el directorio existente para mapear clusters ocupados y encontrar un bloque libre contiguo.
 2. Usa el patrón productor-consumidor con dos hilos y una cola sincronizada para transferir los datos del archivo local al img.
 3. Genera una nueva entrada de directorio con los metadatos (nombre, tamaño, clusters, fechas).
+
+### Fase 5: Eliminación de Archivos
+Se implementó la función "eliminar_archivo" que:
+1. Encuentra la entrada del archivo en el directorio mediante comparación de nombre.
+2. Sobrescribe el byte de tipo con "-" (0x2F) y el nombre con una cadena de puntos.
+3. Libera la entrada del directorio para ser reutilizado sin necesidad de borrar "físicamente" los datos del cluster.
