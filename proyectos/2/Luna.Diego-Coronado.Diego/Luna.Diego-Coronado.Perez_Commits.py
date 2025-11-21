@@ -402,3 +402,157 @@ class OperacionesFS:
         except Exception as e:
             print(f"\t[Error] {e}")
 
+# -----------------------------------------------------
+# Interfaz Gráfica con Tkinter
+# -----------------------------------------------------
+
+class FiUnamFS_GUI(tk.Tk):
+    def __init__(self, imagen_archivo):
+        super().__init__()
+        self.title(f"Sistema de Archivos {NOMBRE_SISTEMA_ARCHIVOS} v{VERSION_SISTEMA}")
+        self.geometry("1000x550")
+        
+        self.sistema = SistemaArchivosFiUnamFS(imagen_archivo)
+        self.operaciones = OperacionesFS(self.sistema)
+        self.hilo_en_curso = False # Bandera para controlar la ejecución
+
+        self.setup_ui()
+        self.verificar_y_cargar_fs()
+
+    def setup_ui(self):
+        # Frame principal para controles
+        control_frame = ttk.LabelFrame(self, text="Controles del Sistema de Archivos", padding="10")
+        control_frame.pack(padx=10, pady=10, fill="x")
+
+        # Configuración de ruta de imagen
+        ttk.Label(control_frame, text="Ruta de Imagen (.img):").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.ruta_var = tk.StringVar(value=self.sistema.imagen_archivo)
+        ruta_entry = ttk.Entry(control_frame, textvariable=self.ruta_var, width=60, state='readonly')
+        ruta_entry.grid(row=0, column=1, sticky="we", padx=5, pady=5)
+        ttk.Button(control_frame, text="Cambiar Ruta", command=self.seleccionar_ruta).grid(row=0, column=2, padx=5, pady=5)
+
+        # Información del Superbloque
+        self.info_label = ttk.Label(control_frame, text="")
+        self.info_label.grid(row=1, column=0, columnspan=3, sticky="w", padx=5, pady=5)
+
+        # Botones de Operación
+        op_frame = ttk.Frame(self)
+        op_frame.pack(padx=10, pady=(0, 10), fill="x")
+        
+        ttk.Button(op_frame, text="1. Listar Directorio", command=self.cmd_listar, width=25).pack(side="left", padx=5)
+        ttk.Button(op_frame, text="2. Copiar a PC (Exportar)", command=self.cmd_copiar_a_pc, width=25).pack(side="left", padx=5)
+        ttk.Button(op_frame, text="3. Copiar a FiUnamFS (Importar)", command=self.cmd_copiar_a_fiunam, width=25).pack(side="left", padx=5)
+        ttk.Button(op_frame, text="4. Eliminar Archivo", command=self.cmd_eliminar, width=25).pack(side="left", padx=5)
+
+        # Etiqueta de Estado/Animación
+        self.estado_var = tk.StringVar(value="Esperando operación...")
+        self.estado_label = ttk.Label(self, textvariable=self.estado_var, foreground="blue")
+        self.estado_label.pack(fill="x", padx=10, pady=(0, 5))
+        
+        # Treeview para mostrar el directorio
+        self.tree = ttk.Treeview(self, columns=('Tipo', 'Nombre', 'Tamaño', 'Cluster', 'Creación', 'Modificación'), show='headings')
+        self.tree.heading('Tipo', text='Tipo', anchor=tk.W)
+        self.tree.heading('Nombre', text='Nombre', anchor=tk.W)
+        self.tree.heading('Tamaño', text='Tamaño (B)', anchor=tk.E)
+        self.tree.heading('Cluster', text='Cluster Inicial', anchor=tk.E)
+        self.tree.heading('Creación', text='Fecha Creación', anchor=tk.W)
+        self.tree.heading('Modificación', text='Fecha Modif', anchor=tk.W)
+        
+        # Anchos de columna
+        self.tree.column('Tipo', width=50, anchor=tk.W)
+        self.tree.column('Nombre', width=150, anchor=tk.W)
+        self.tree.column('Tamaño', width=100, anchor=tk.E)
+        self.tree.column('Cluster', width=100, anchor=tk.E)
+        self.tree.column('Creación', width=150, anchor=tk.W)
+        self.tree.column('Modificación', width=150, anchor=tk.W)
+        
+        self.tree.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Scrollbar
+        vsb = ttk.Scrollbar(self.tree, orient="vertical", command=self.tree.yview)
+        vsb.pack(side='right', fill='y')
+        self.tree.configure(yscrollcommand=vsb.set)
+
+    def verificar_y_cargar_fs(self):
+        """ Intenta cargar el superbloque al iniciar o al cambiar la ruta """
+        if self.sistema.verificar_existencia_imagen():
+            try:
+                self.sistema.leer_superbloque()
+                self.info_label.config(text=f"Etiqueta: {self.sistema.etiqueta_volumen} | Cluster Size: {self.sistema.tamano_cluster} B | Total Clusters: {self.sistema.total_clusters}", foreground="green")
+                self.cmd_listar() # Listar al inicio si se pudo cargar
+            except Exception as e:
+                self.info_label.config(text=f"Error cargando FS: {e}", foreground="red")
+        else:
+             self.info_label.config(text=f"Archivo '{self.sistema.imagen_archivo}' no encontrado. Cámbialo.", foreground="orange")
+
+    def seleccionar_ruta(self):
+        """ Abre un diálogo para seleccionar el archivo .img """
+        nueva_ruta = filedialog.askopenfilename(
+            title="Seleccionar archivo fiunamfs.img",
+            filetypes=[("Archivos de Imagen", "*.img"), ("Todos los archivos", "*.*")]
+        )
+        if nueva_ruta:
+            self.sistema.actualizar_ruta_imagen(nueva_ruta)
+            self.ruta_var.set(nueva_ruta)
+            self.verificar_y_cargar_fs()
+
+    # -----------------------------------------------------
+    # Funciones de Hilos y Animación
+    # -----------------------------------------------------
+
+    def _animacion_ui(self, evento_stop):
+        """ Hilo de animación para la UI """
+        chars = "|/-\\"
+        idx = 0
+        while not evento_stop.is_set():
+            self.estado_var.set(f"Procesando... {chars[idx % len(chars)]}")
+            idx += 1
+            self.update_idletasks() # Forzar actualización de la GUI
+            time.sleep(0.1)
+        self.estado_var.set("Operación completada.")
+        self.hilo_en_curso = False
+
+    def ejecutar_tarea_con_animacion(self, funcion_tarea, *args, **kwargs):
+        """ Ejecuta la función en un hilo y lanza la animación """
+        if self.hilo_en_curso:
+            messagebox.showwarning("Procesando", "Hay una operación en curso. Espere por favor.")
+            return
+
+        self.hilo_en_curso = True
+        evento_stop = threading.Event()
+        
+        # Hilo 1: La tarea pesada
+        hilo_trabajo = threading.Thread(target=self._hilo_trabajo_wrapper, args=(funcion_tarea, evento_stop, args, kwargs))
+        
+        # Hilo 2: La UI animada
+        hilo_anim = threading.Thread(target=self._animacion_ui, args=(evento_stop,))
+
+        hilo_anim.start()
+        hilo_trabajo.start()
+
+    def _hilo_trabajo_wrapper(self, funcion_tarea, evento_stop, args, kwargs):
+        """ Wrapper para ejecutar la tarea, capturar resultados/errores y detener la animación """
+        try:
+            resultado = funcion_tarea(*args, **kwargs)
+            self.after(0, lambda: self._manejar_resultado(resultado)) # Ejecutar en el hilo principal de Tkinter
+        except Exception as e:
+            self.after(0, lambda: self._manejar_error(e))
+        finally:
+            evento_stop.set() # Comunicación: Avisar que terminé
+
+    def _manejar_resultado(self, resultado):
+        """ Muestra el resultado de la operación en la GUI """
+        if isinstance(resultado, list):
+            # Es listar directorio
+            self._actualizar_treeview(resultado)
+        elif isinstance(resultado, str):
+            # Es copiar o eliminar
+            messagebox.showinfo("Operación Exitosa", resultado)
+            self.cmd_listar(silencioso=True) # Refrescar la vista después de modificar el FS
+        
+        self.info_label.config(text=f"Etiqueta: {self.sistema.etiqueta_volumen} | Cluster Size: {self.sistema.tamano_cluster} B | Total Clusters: {self.sistema.total_clusters}", foreground="green")
+
+    def _manejar_error(self, error):
+        """ Muestra el error en la GUI """
+        messagebox.showerror("Error de Operación", str(error))
+        self.info_label.config(text=f"Error cargando FS: {error}", foreground="red")
