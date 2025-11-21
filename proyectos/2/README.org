@@ -75,7 +75,7 @@ contenidos del /«disco»/?
     validar nunca modificar un sistema de archivos que no sea el correcto! Debe
     ser la cadena =FiUnamFS=.
   - 10--14 :: Versión de la implementación. Estamos implementando la versión
-    =26-2= (ojo, es una /cadena/, no un número). Deben validar que el sistema de
+    =26-1= (ojo, es una /cadena/, no un número). Deben validar que el sistema de
     archivos a utilizar sea de esta versión, para evitar la corrupción de datos.
   - 20--35 :: Etiqueta del volumen
   - 40--44 :: Tamaño del cluster en bytes
