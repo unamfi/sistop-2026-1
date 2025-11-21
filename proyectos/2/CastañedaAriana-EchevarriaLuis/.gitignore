@@ -1,0 +1,25 @@
+# Ignorar archivos de compilación de Python (caches)
+__pycache__/
+*.pyc
+
+# Ignorar las imágenes de disco que son archivos binarios grandes 
+# y se generan al ejecutar el programa (Ej. fiunamfs.img)
+*.img
+
+# Ignorar archivos de respaldo creados por la función safe_backup()
+*.bak
+
+# Ignorar archivos temporales comunes de SO (archivos de sistema)
+.DS_Store
+
+# Ignorar archivos de texto plano (usualmente pruebas de copyin/copyout)
+*.txt
+
+# Ignorar imágenes extraídas del disco (como logo.png)
+*.png
+*.jpg
+*.jpeg
+
+# Ignorar archivos extraídos específicos del FiUnamFS original
+*.org
+*.out
