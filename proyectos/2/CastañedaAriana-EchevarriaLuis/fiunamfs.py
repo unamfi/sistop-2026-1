@@ -10,22 +10,18 @@ import tempfile
 import shutil
 from types import SimpleNamespace
 
-# -------------------- Constantes --------------------
+# -------------------- Constantes Globales --------------------
 SUPERBLOCK_CLUSTER = 0   
 SUPERBLOCK_SIZE = 512   
 EXPECTED_IDENT = b'FiUnamFS'
-# [CORRECCIÓN] Versión oficial ajustada a 26-1 por instrucción del profesor
+# Versión oficial estricta
 EXPECTED_VERSION = b'26-1' 
-# Patrón estricto para entrada libre: 15 puntos ASCII
 FREE_ENTRY_NAME = b'.' * 15
 
-# Offsets en superbloque
-OFF_IDENT = 0
-LEN_IDENT = 9
-OFF_VERSION = 10
-LEN_VERSION = 5
-OFF_LABEL = 20
-LEN_LABEL = 16
+# Offsets
+OFF_IDENT = 0; LEN_IDENT = 9
+OFF_VERSION = 10; LEN_VERSION = 5
+OFF_LABEL = 20; LEN_LABEL = 16
 OFF_CLUSTER_SIZE = 40
 OFF_DIR_CLUSTERS = 45
 OFF_TOTAL_CLUSTERS = 50
@@ -33,446 +29,332 @@ OFF_TOTAL_CLUSTERS = 50
 ENTRY_SIZE = 64   
 NAME_LEN = 15     
 
-# Concurrencia
-disk_lock = Lock()  
-work_queue = Queue()  
+# Cola de trabajo global 
+work_queue = Queue()
 
-# -------------------- Funciones de Bajo Nivel --------------------
+# -------------------- CLASE PRINCIPAL DEL SISTEMA DE ARCHIVOS --------------------
 
-def read_superblock_from(f):
+class FiUnamFS:
     """
-    Lee el superbloque (primer cluster) y extrae la información esencial.
+    Controlador principal del sistema de archivos FiUnamFS.
+    Encapsula la lógica de acceso, validación y manipulación de la imagen de disco.
     """
-    f.seek(SUPERBLOCK_CLUSTER * SUPERBLOCK_SIZE)
-    sb = f.read(SUPERBLOCK_SIZE)
-    ident = sb[OFF_IDENT:OFF_IDENT+LEN_IDENT].split(b"\x00", 1)[0]
-    version = sb[OFF_VERSION:OFF_VERSION+LEN_VERSION].split(b"\x00", 1)[0]
-    label = sb[OFF_LABEL:OFF_LABEL+LEN_LABEL].split(b"\x00", 1)[0]
-    
-    def read_u32(offset):
-        try:
-            return struct.unpack_from('<I', sb, offset)[0]
-        except struct.error:
-            return None
-            
-    cluster_size = read_u32(OFF_CLUSTER_SIZE) or 1024
-    dir_clusters = read_u32(OFF_DIR_CLUSTERS) or 3
-    total_clusters = read_u32(OFF_TOTAL_CLUSTERS) or (1440 * 1024) // cluster_size
-    
-    return {
-        'ident': ident,
-        'version': version,
-        'label': label,
-        'cluster_size': cluster_size,
-        'dir_clusters': dir_clusters,
-        'total_clusters': total_clusters,
-        'raw': sb
-    }
-
-def format_ts(dt):
-    """Convierte objeto datetime a formato AAAAMMDDHHMMSS como bytes ASCII."""
-    return dt.strftime('%Y%m%d%H%M%S').encode('ascii')[:14]
-
-def parse_directory(f, cluster_size, dir_clusters, start_cluster=1):
-    """
-    Parsea la región del directorio, extrayendo las entradas de archivo.
-    """
-    dir_offset = start_cluster * cluster_size
-    dir_size = dir_clusters * cluster_size
-    f.seek(dir_offset)
-    data = f.read(dir_size)
-    entries = []
-    num_entries = len(data) // ENTRY_SIZE
-    
-    for i in range(num_entries):
-        off = i * ENTRY_SIZE
-        entry = data[off:off+ENTRY_SIZE]
-        if len(entry) < ENTRY_SIZE:
-            break
-            
-        tipo = entry[0]
-        name_raw = entry[1:1+NAME_LEN]
+    def __init__(self, img_path):
+        self.img_path = img_path
+        self.lock = Lock()
+        self.valid = False
         
-        try:
-            name = name_raw.decode('ascii', errors='ignore').rstrip('\x00').strip()
-        except Exception:
-            name = ''
-
-        # [BUG FIX] Leer cluster_init y size ANTES de verificar is_unused
-        try:
-            cluster_init = struct.unpack_from('<I', entry, 16)[0]
-        except Exception:
-            cluster_init = 0
+        if not os.path.exists(img_path):
+            raise FileNotFoundError(f"La imagen {img_path} no existe.")
             
-        try:
-            size = struct.unpack_from('<I', entry, 20)[0]
-        except Exception:
-            size = 0
-
-        # [VERIFICACIÓN] La entrada es libre si el nombre es el patrón de puntos,
-        # todo nulo, o si está vacío con tamaño cero.
-        is_unused = (name_raw == FREE_ENTRY_NAME) or \
-                    (name_raw == b'\x00'*NAME_LEN) or \
-                    (name == '' and cluster_init == 0 and size == 0)
+        # Cargar metadatos iniciales
+        with open(self.img_path, 'rb') as f:
+            self.sb = self._read_superblock(f)
             
-        created_raw = entry[24:38].decode('ascii', errors='ignore').rstrip('\x00').strip()
-        modified_raw = entry[38:52].decode('ascii', errors='ignore').rstrip('\x00').strip()
+        self._validate_version()
         
-        def parse_ts(s):
-            """Intenta parsear la marca de tiempo AAAAMMDDHHMMSS."""
-            if isinstance(s, str) and len(s) >= 14 and s.isdigit():
-                try:
-                    return datetime.datetime.strptime(s[:14], '%Y%m%d%H%M%S')
-                except Exception:
-                    pass
-            return s or None
+        # Cachear valores frecuentes para no leerlos del sb cada vez
+        self.cluster_size = self.sb['cluster_size']
+        self.dir_clusters = self.sb['dir_clusters']
+        self.total_clusters = self.sb['total_clusters']
+        self.valid = True
+
+    def _read_superblock(self, f):
+        """Lee y parsea el superbloque."""
+        f.seek(SUPERBLOCK_CLUSTER * SUPERBLOCK_SIZE)
+        data = f.read(SUPERBLOCK_SIZE)
+        
+        def read_u32(offset):
+            return struct.unpack_from('<I', data, offset)[0]
+
+        return {
+            'ident': data[OFF_IDENT:OFF_IDENT+LEN_IDENT].split(b"\x00", 1)[0],
+            'version': data[OFF_VERSION:OFF_VERSION+LEN_VERSION].split(b"\x00", 1)[0],
+            'label': data[OFF_LABEL:OFF_LABEL+LEN_LABEL].split(b"\x00", 1)[0],
+            'cluster_size': read_u32(OFF_CLUSTER_SIZE) or 1024,
+            'dir_clusters': read_u32(OFF_DIR_CLUSTERS) or 3,
+            'total_clusters': read_u32(OFF_TOTAL_CLUSTERS) or 1440
+        }
+
+    def _validate_version(self):
+        """Verifica estrictamente la versión 26-1."""
+        if self.sb['ident'] != EXPECTED_IDENT:
+            raise ValueError(f"Identificador inválido: {self.sb['ident']}")
+        if self.sb['version'] != EXPECTED_VERSION:
+            raise ValueError(f"Versión inválida: {self.sb['version'].decode()}. Se requiere {EXPECTED_VERSION.decode()}.")
+
+    def _parse_directory(self, f):
+        """Lee todas las entradas del directorio."""
+        dir_offset = 1 * self.cluster_size
+        dir_size = self.dir_clusters * self.cluster_size
+        f.seek(dir_offset)
+        data = f.read(dir_size)
+        
+        entries = []
+        num_entries = len(data) // ENTRY_SIZE
+        
+        for i in range(num_entries):
+            off = i * ENTRY_SIZE
+            entry = data[off:off+ENTRY_SIZE]
+            if len(entry) < ENTRY_SIZE: break
             
-        entries.append({
-            'index': i,
-            'tipo': tipo,
-            'name': name,
-            'name_raw': name_raw,
-            'is_unused': is_unused,
-            'cluster_init': cluster_init,
-            'size': size,
-            'created': parse_ts(created_raw),
-            'modified': parse_ts(modified_raw),
-            'raw': entry
-        })
-    return entries
+            name_raw = entry[1:1+NAME_LEN]
+            try: name = name_raw.decode('ascii', errors='ignore').rstrip('\x00').strip()
+            except: name = ''
+            
+            try: cluster_init = struct.unpack_from('<I', entry, 16)[0]
+            except: cluster_init = 0
+            try: size = struct.unpack_from('<I', entry, 20)[0]
+            except: size = 0
+            
+            # Determinación de vacío
+            is_unused = (name_raw == FREE_ENTRY_NAME) or \
+                        (name_raw == b'\x00'*NAME_LEN) or \
+                        (name == '' and cluster_init == 0 and size == 0)
+            
+            # Parsear fechas
+            c_str = entry[24:38].decode('ascii', errors='ignore')
+            m_str = entry[38:52].decode('ascii', errors='ignore')
+            
+            entries.append({
+                'index': i, 'name': name, 'is_unused': is_unused,
+                'cluster_init': cluster_init, 'size': size,
+                'created': self._parse_ts(c_str), 'modified': self._parse_ts(m_str)
+            })
+        return entries
 
-def find_free_directory_entry(entries):
-    """Devuelve índice de primera entrada libre/no utilizada."""
-    for e in entries:
-        if e['is_unused']:
-            return e['index']
-    return None
+    def _parse_ts(self, s):
+        """Helper para fechas."""
+        if len(s) >= 14 and s.isdigit():
+            try: return datetime.datetime.strptime(s[:14], '%Y%m%d%H%M%S')
+            except: pass
+        return s
 
-def used_ranges_from_entries(entries, cluster_size):
-    """Calcula los rangos de clusters ocupados por los archivos activos."""
-    ranges = []
-    for e in entries:
-        if not e['is_unused'] and e['size'] > 0 and e['cluster_init'] > 0:
-            start = e['cluster_init']
-            needed = math.ceil(e['size'] / cluster_size)
-            ranges.append((start, start + needed))
-    ranges.sort()
-    return ranges
+    def _format_ts(self, dt):
+        return dt.strftime('%Y%m%d%H%M%S').encode('ascii')[:14]
 
-def find_contiguous_gap(ranges, data_start, total_clusters, needed):
-    """Busca el primer espacio contiguo libre para el nuevo archivo."""
-    cur = data_start
-    for (s, e) in ranges:
-        if cur + needed <= s:
-            return cur
-        cur = max(cur, e)
-    if cur + needed <= total_clusters:
-        return cur
-    return None
-
-
-def safe_backup(path):
-    """Crea una copia de seguridad segura del archivo de imagen antes de modificarlo."""
-    bak = path + '.bak'
-    if not os.path.exists(bak):
-        with disk_lock:
+    def create_backup(self):
+        """Genera respaldo .bak de seguridad."""
+        bak = self.img_path + '.bak'
+        with self.lock:
             try:
-                with open(path, 'rb') as src, open(bak, 'wb') as dst:
-                    dst.write(src.read())
+                shutil.copy2(self.img_path, bak)
+                print(f"[Backup] Respaldo generado: {bak}")
             except Exception as e:
-                print(f"Error creando backup: {e}")
-                return None
-    return bak
+                print(f"[Backup Error] {e}")
 
-def read_file_from_image(path, cluster_init, size, cluster_size):
-    """Lee el contenido de un archivo desde la imagen de disco de forma segura."""
-    with disk_lock:
-        with open(path, 'rb') as f:
-            f.seek(cluster_init * cluster_size)
-            return f.read(size)
+    # --- MÉTODOS PÚBLICOS ---
 
-def write_file_to_image(path, cluster_init, data, cluster_size):
-    """Escribe los datos de un archivo en la imagen de disco de forma segura."""
-    with disk_lock:
-        with open(path, 'r+b') as f:
-            f.seek(cluster_init * cluster_size)
-            f.write(data)
-            f.flush()
-            os.fsync(f.fileno())
+    def list_files(self):
+        """Devuelve lista de archivos activos (filtrados)."""
+        with self.lock:
+            with open(self.img_path, 'rb') as f:
+                entries = self._parse_directory(f)
+        
+        return [e for e in entries 
+                if not e['is_unused'] and e['name'] != '--------------' and e['name'] != '...............']
 
-def update_directory_entry(path, entry_index, new_entry_bytes, cluster_size, dir_start_cluster=1):
-    """Actualiza una entrada de directorio específica en el disco."""
-    dir_offset = dir_start_cluster * cluster_size
-    entry_offset = dir_offset + entry_index * ENTRY_SIZE
-    with disk_lock:
-        with open(path, 'r+b') as f:
-            f.seek(entry_offset)
-            f.write(new_entry_bytes)
-            f.flush(); os.fsync(f.fileno())
+    def read_file(self, filename, out_path):
+        """Extrae un archivo del sistema."""
+        with self.lock:
+            with open(self.img_path, 'rb') as f:
+                entries = self._parse_directory(f)
+                found = next((e for e in entries if not e['is_unused'] and e['name'] == filename), None)
+                
+                if not found:
+                    raise FileNotFoundError(f"Archivo '{filename}' no encontrado en FiUnamFS.")
+                
+                f.seek(found['cluster_init'] * self.cluster_size)
+                data = f.read(found['size'])
+                
+            with open(out_path, 'wb') as fout:
+                fout.write(data)
+            print(f"Archivo {filename} extraído correctamente → {out_path}")
 
+    def write_file(self, src_path, dest_name):
+        """Inserta un archivo en el sistema."""
+        if len(dest_name) > NAME_LEN:
+            raise ValueError(f"El nombre de destino '{dest_name}' excede {NAME_LEN - 1} caracteres.")
+            
+        file_size = os.path.getsize(src_path)
+        with open(src_path, 'rb') as f:
+            data = f.read()
 
-# -------------------- Hilo Worker (Productor/Consumidor) --------------------
+        self.create_backup() # Backup automático
 
-def worker(path, cluster_size, dir_clusters, total_clusters):
-    """Hilo trabajador que procesa tareas de copyin, copyout y delete de la cola."""
+        with self.lock:
+            with open(self.img_path, 'r+b') as f:
+                entries = self._parse_directory(f)
+                
+                # Validaciones
+                if any(not e['is_unused'] and e['name'] == dest_name for e in entries):
+                    raise FileExistsError(f"El archivo '{dest_name}' ya existe.")
+                
+                free_idx = next((e['index'] for e in entries if e['is_unused']), None)
+                if free_idx is None:
+                    raise OSError("Directorio lleno.")
+
+                # Buscar espacio (Hueco o Final)
+                needed_clusters = math.ceil(file_size / self.cluster_size)
+                ranges = []
+                for e in entries:
+                    if not e['is_unused'] and e['cluster_init'] > 0:
+                        s = e['cluster_init']
+                        n = math.ceil(e['size'] / self.cluster_size)
+                        ranges.append((s, s+n))
+                ranges.sort()
+                
+                data_start = 1 + self.dir_clusters
+                target_cluster = data_start
+                for s, e in ranges:
+                    if target_cluster + needed_clusters <= s: break
+                    target_cluster = max(target_cluster, e)
+                
+                if target_cluster + needed_clusters > self.total_clusters:
+                    raise OSError("Espacio insuficiente en disco.")
+
+                # Escribir datos
+                f.seek(target_cluster * self.cluster_size)
+                # Padding con ceros al final del cluster
+                padding = (needed_clusters * self.cluster_size) - len(data)
+                f.write(data + b'\x00' * padding)
+                
+                # Actualizar Directorio
+                entry_offset = (1 * self.cluster_size) + (free_idx * ENTRY_SIZE)
+                f.seek(entry_offset)
+                
+                name_bytes = dest_name.encode('ascii').ljust(NAME_LEN, b'\x00')
+                now = self._format_ts(datetime.datetime.now())
+                
+                # Estructura: Tipo(-) + Nombre + Cluster + Size + Dates + Padding
+                new_entry = b'-' + name_bytes + \
+                            struct.pack('<I', target_cluster) + \
+                            struct.pack('<I', file_size) + \
+                            now + now + \
+                            b'\x00' * (ENTRY_SIZE - 1 - NAME_LEN - 8 - 28)
+                f.write(new_entry)
+                f.flush(); os.fsync(f.fileno())
+        print(f"Archivo {src_path} escrito como {dest_name} en cluster {target_cluster} (tamaño {file_size} bytes).")
+
+    def delete_file(self, filename):
+        """Elimina un archivo."""
+        self.create_backup()
+        
+        with self.lock:
+            with open(self.img_path, 'r+b') as f:
+                entries = self._parse_directory(f)
+                found = next((e for e in entries if not e['is_unused'] and e['name'] == filename), None)
+                
+                if not found:
+                    raise FileNotFoundError(f"Archivo '{filename}' no encontrado.")
+                
+                # Marcar como borrado
+                offset = (1 * self.cluster_size) + (found['index'] * ENTRY_SIZE)
+                f.seek(offset)
+                
+                # Patrón de borrado seguro (limpiando referencias)
+                empty_entry = b'\x2f' + FREE_ENTRY_NAME + \
+                              struct.pack('<I', 0) + struct.pack('<I', 0) + \
+                              b'0'*14 + b'0'*14 + \
+                              b'\x00' * (ENTRY_SIZE - 1 - NAME_LEN - 8 - 28)
+                f.write(empty_entry)
+                f.flush(); os.fsync(f.fileno())
+        print(f"Archivo {filename} eliminado correctamente (entrada {found['index']} marcada como libre).")
+
+# -------------------- Hilo Worker --------------------
+
+def worker_wrapper(fs_instance):
+    """Consume tareas de la cola y ejecuta métodos de la instancia fs."""
     while True:
         task = work_queue.get()
         if task is None:
-            # Señal de terminación recibida
-            work_queue.task_done()
-            break
+            work_queue.task_done(); break
             
         op = task.get('op')
         try:
             if op == 'copyout':
-                _task_copyout(path, cluster_size, task)
+                fs_instance.read_file(task['name'], task['outpath'])
             elif op == 'copyin':
-                _task_copyin(path, cluster_size, dir_clusters, total_clusters, task)
+                fs_instance.write_file(task['src'], task['dest_name'])
             elif op == 'delete':
-                _task_delete(path, cluster_size, dir_clusters, task)
+                fs_instance.delete_file(task['name'])
         except Exception as e:
-            # Si hay un error, lo registramos. El hilo principal debe manejar la detención.
             print(f"[WORKER ERROR] Error en tarea {op}: {e}", file=sys.stderr)
-        
-        # Indica que la tarea actual ha terminado, permitiendo al hilo principal avanzar
-        work_queue.task_done()
+        finally:
+            work_queue.task_done()
 
-
-def _task_copyout(path, cluster_size, task):
-    """Tarea para extraer un archivo de la imagen al sistema de archivos local."""
-    filename = task['name']
-    outpath = task['outpath']
-    with open(path, 'rb') as f:
-        sb = read_superblock_from(f)
-        entries = parse_directory(f, cluster_size, sb['dir_clusters'])
-        
-        found = [e for e in entries if (not e['is_unused']) and e['name'] == filename]
-        if not found:
-            print(f"Archivo {filename} no encontrado en imagen.")
-            return
-            
-        e = found[0]
-        data = read_file_from_image(path, e['cluster_init'], e['size'], cluster_size)
-        
-        with open(outpath, 'wb') as out:
-            out.write(data)
-        print(f"Archivo {filename} extraído correctamente → {outpath}")
-
-def _task_copyin(path, cluster_size, dir_clusters, total_clusters, task):
-    """Tarea para insertar un archivo en la imagen de disco."""
-    src = task['src']
-    dest_name = task['dest_name']
-    
-    with open(src, 'rb') as s:
-        data = s.read()
-        
-    size = len(data)
-    needed_clusters = math.ceil(size / cluster_size)
-    
-    with open(path, 'r+b') as f:
-        sb = read_superblock_from(f)
-        entries = parse_directory(f, cluster_size, sb['dir_clusters'])
-        
-        dir_index = find_free_directory_entry(entries)
-        if dir_index is None:
-            print("No hay entradas libres en el directorio.")
-            return
-            
-        ranges = used_ranges_from_entries(entries, cluster_size)
-        data_start = (1 + sb['dir_clusters'])
-        target_cluster = find_contiguous_gap(ranges, data_start, sb['total_clusters'], needed_clusters)
-        
-        if target_cluster is None:
-            print("No hay espacio contiguo suficiente en el disco.")
-            return
-            
-        write_file_to_image(path, target_cluster, 
-                            data + b'\x00' * (needed_clusters*cluster_size - size), 
-                            cluster_size)
-                            
-        # Construir y actualizar entrada de directorio
-        tipo = b'-' # Tipo de archivo normal (ej. '\x2d')
-        name_field = dest_name.encode('ascii', errors='ignore')[:NAME_LEN].ljust(NAME_LEN, b'\x00')
-        cluster_bytes = struct.pack('<I', target_cluster)
-        size_bytes = struct.pack('<I', size)
-        now = format_ts(datetime.datetime.now())
-        created = now
-        modified = now
-        reserved_len = ENTRY_SIZE - (1 + NAME_LEN + 4 + 4 + 14 + 14)
-        reserved = b'\x00' * reserved_len
-        new_entry = tipo + name_field + cluster_bytes + size_bytes + created + modified + reserved
-        
-        update_directory_entry(path, dir_index, new_entry, cluster_size)
-        print(f"Archivo {src} escrito como {dest_name} en cluster {target_cluster} (tamaño {size} bytes).")
-
-def _task_delete(path, cluster_size, dir_clusters, task):
-    """Tarea para marcar un archivo como eliminado (entrada de directorio libre)."""
-    name = task['name']
-    
-    with open(path, 'r+b') as f:
-        sb = read_superblock_from(f)
-        entries = parse_directory(f, cluster_size, sb['dir_clusters'])
-        
-        found = [e for e in entries if (not e['is_unused']) and e['name'] == name]
-        if not found:
-            print(f"Archivo {name} no encontrado en el directorio.")
-            return
-            
-        e = found[0]
-        
-        # Construir entrada de directorio 'eliminada/libre'
-        tipo = b'\x2f' # Tipo de archivo eliminado (ej. '/')
-        # Marcar como libre con el patrón de puntos
-        name_field = FREE_ENTRY_NAME 
-        cluster_bytes = struct.pack('<I', 0) # Cluster inicial a 0
-        size_bytes = struct.pack('<I', 0)    # Tamaño a 0
-        created = b'0'*14
-        modified = b'0'*14
-        
-        reserved_len = ENTRY_SIZE - (1 + NAME_LEN + 4 + 4 + 14 + 14)
-        reserved = b'\x00' * reserved_len
-        
-        new_entry = tipo + name_field + cluster_bytes + size_bytes + created + modified + reserved
-        
-        update_directory_entry(path, e['index'], new_entry, cluster_size)
-        print(f"Archivo {name} eliminado correctamente (entrada {e['index']} marcada como libre).")
-
-# -------------------- CLI Comandos --------------------
-
-def _check_fs_validity(sb):
-    """Valida el identificador y la versión del superbloque."""
-    if sb['ident'] != EXPECTED_IDENT:
-        print(f"ERROR: Identificador esperado '{EXPECTED_IDENT.decode()}', encontrado '{sb['ident'].decode()}'.", file=sys.stderr)
-        return False
-    if sb['version'] != EXPECTED_VERSION:
-        print(f"ERROR: La versión no es {EXPECTED_VERSION.decode()}. Ejecuta makecopy26 para convertir/reparar la imagen.", file=sys.stderr)
-        return False
-    return True
+# -------------------- Comandos CLI --------------------
 
 def cmd_info(args):
-    """Muestra información del superbloque del sistema de archivos."""
-    with open(args.image, 'rb') as f:
-        sb = read_superblock_from(f)
-    print('Ident:', sb['ident'].decode('ascii'))
-    print('Version:', sb['version'].decode('ascii'))
-    print('Label:', sb['label'].decode('ascii'))
-    print('Cluster size:', sb['cluster_size'], 'bytes')
-    print('Dir clusters:', sb['dir_clusters'])
-    print('Total clusters:', sb['total_clusters'])
-    
-    if not _check_fs_validity(sb):
-        print(f"AVISO: La imagen puede no ser un FiUnamFS {EXPECTED_VERSION.decode()} válido.")
+    try:
+        # Al instanciar, se valida automáticamente
+        fs = FiUnamFS(args.image)
+        print(f"Ident: {fs.sb['ident'].decode()}")
+        print(f"Version: {fs.sb['version'].decode()}")
+        print(f"Label: {fs.sb['label'].decode()}")
+        print(f"Cluster size: {fs.cluster_size} bytes")
+        print(f"Dir clusters: {fs.dir_clusters}")
+        print(f"Total clusters: {fs.total_clusters}")
+    except ValueError as e:
+        print(f"AVISO: {e}")
+    except Exception as e:
+        print(f"ERROR: {e}")
 
 def cmd_list(args):
-    """
-    Lista SOLO los archivos activos en el directorio, ocultando entradas vacías
-    o marcadores de borrado para mejorar la experiencia de usuario.
-    """
-    with open(args.image, 'rb') as f:
-        sb = read_superblock_from(f)
-        
-    if not _check_fs_validity(sb):
-        return
+    try:
+        fs = FiUnamFS(args.image) # Esto valida 26-1 estrictamente
+        files = fs.list_files()
+        print(f'Entradas del directorio ({len(files)} archivos activos):')
+        for e in files:
+            cts = e['created'].strftime('%Y-%m-%d %H:%M:%S') if isinstance(e['created'], datetime.datetime) else e['created']
+            print(f"Index={e['index']} | Name={e['name']} | Size={e['size']} bytes | Cluster={e['cluster_init']} | Created={cts}")
+    except Exception as e:
+        print(f"ERROR: No se pudo listar. {e}", file=sys.stderr)
 
-    with open(args.image, 'rb') as f:
-        sb = read_superblock_from(f)
-        entries = parse_directory(f, sb['cluster_size'], sb['dir_clusters'])
-        
-    archivos_activos = [
-        e for e in entries 
-        if not e['is_unused'] and e['name'] != '--------------' and e['name'] != '...............'
-    ]
-        
-    print(f'Entradas del directorio ({len(archivos_activos)} archivos activos):')
-    
-    for e in archivos_activos:
-        created = e['created']
-        if isinstance(created, datetime.datetime):
-            created = created.strftime('%Y-%m-%d %H:%M:%S')
-
-        print(f"Index={e['index']} | Name={e['name']} | Size={e['size']} bytes | Cluster={e['cluster_init']} | Created={created}")
+def _launch_worker(args):
+    """Helper para comandos asíncronos."""
+    try:
+        fs = FiUnamFS(args.image)
+        t = Thread(target=worker_wrapper, args=(fs,), daemon=True)
+        t.start()
+        return t
+    except Exception as e:
+        print(f"ERROR INICIALIZANDO FS: {e}", file=sys.stderr)
+        sys.exit(1)
 
 def cmd_copyout(args):
-    """Extrae archivo de imagen usando el worker (productor/consumidor)."""
-    with open(args.image, 'rb') as f:
-        sb = read_superblock_from(f)
-        
-    if not _check_fs_validity(sb): return
-        
-    t = Thread(target=worker, args=(args.image, sb['cluster_size'], sb['dir_clusters'], sb['total_clusters']), daemon=True)
-    t.start()
-    
-    work_queue.put({'op':'copyout', 'name': args.name, 'outpath': args.out})
-    work_queue.join()
-    
-    work_queue.put(None)
-    t.join()
+    t = _launch_worker(args)
+    work_queue.put({'op':'copyout', 'name':args.name, 'outpath':args.out})
+    work_queue.join(); work_queue.put(None); t.join()
 
 def cmd_copyin(args):
-    """Inserta archivo en imagen usando el worker y realiza backup previo."""
-    
-    if len(args.dest_name) >= NAME_LEN:
-        print(f"ERROR: El nombre de destino '{args.dest_name}' excede {NAME_LEN - 1} caracteres.", file=sys.stderr)
-        return
-        
-    with open(args.image, 'rb') as f:
-        sb = read_superblock_from(f)
-        
-    if not _check_fs_validity(sb): return
-        
     if not os.path.exists(args.src):
         print(f"ERROR: Archivo fuente '{args.src}' no encontrado.", file=sys.stderr)
         return
-        
-    safe_backup(args.image)
-    t = Thread(target=worker, args=(args.image, sb['cluster_size'], sb['dir_clusters'], sb['total_clusters']), daemon=True)
-    t.start()
-    
-    work_queue.put({'op':'copyin', 'src': args.src, 'dest_name': args.dest_name})
-    work_queue.join()
-    
-    work_queue.put(None)
-    t.join()
+    t = _launch_worker(args)
+    work_queue.put({'op':'copyin', 'src':args.src, 'dest_name':args.dest_name})
+    work_queue.join(); work_queue.put(None); t.join()
 
 def cmd_delete(args):
-    """Elimina archivo usando el worker (marca como libre) y realiza backup previo."""
-    with open(args.image, 'rb') as f:
-        sb = read_superblock_from(f)
-        
-    if not _check_fs_validity(sb): return
-        
-    safe_backup(args.image)
-    t = Thread(target=worker, args=(args.image, sb['cluster_size'], sb['dir_clusters'], sb['total_clusters']), daemon=True)
-    t.start()
-    
-    work_queue.put({'op':'delete', 'name': args.name})
-    work_queue.join()
-    
-    work_queue.put(None)
-    t.join()
+    t = _launch_worker(args)
+    work_queue.put({'op':'delete', 'name':args.name})
+    work_queue.join(); work_queue.put(None); t.join()
 
 def cmd_makecopy26(args):
-    """Crea una copia del FS fuente y fuerza la versión oficial (26-1) en el superbloque."""
-    src = args.src
-    dst = args.dst
-    if not os.path.exists(src):
-        print(f"ERROR: El archivo fuente {src} no existe.", file=sys.stderr)
-        return
-    if os.path.exists(dst):
-        print(f"El archivo destino {dst} ya existe.", file=sys.stderr)
-        return
-        
+    """Herramienta estática de reparación."""
+    src, dst = args.src, args.dst
+    if not os.path.exists(src): print(f"ERROR: El archivo fuente {src} no existe.", file=sys.stderr); return
+    if os.path.exists(dst): print(f"El archivo destino {dst} ya existe.", file=sys.stderr); return
+    
     with open(src, 'rb') as fsrc, open(dst, 'wb') as fdst:
         fdst.write(fsrc.read())
-        
     with open(dst, 'r+b') as f:
         f.seek(OFF_VERSION)
         f.write(EXPECTED_VERSION.ljust(LEN_VERSION, b'\x00'))
         f.flush(); os.fsync(f.fileno())
-        
     print(f"Imagen {dst} creada con versión oficial {EXPECTED_VERSION.decode()} a partir de {src}.")
 
-# -------------------- Pruebas y Creación de Imagen --------------------
+# -------------------- SELFTEST --------------------
 
 def create_test_image(path):
     """
@@ -502,14 +384,14 @@ def create_test_image(path):
         
         # 3. Escribir Datos de Prueba
         data_cluster = 1 + dir_clusters # Cluster de datos inicial: 1 (directorio) + 3 (clusters) = 4
-        readme = b'Hello FiUnamFS\n' * 100 # 1600 bytes -> 2 clusters
-        logo = b'\x89PNG' + b'LOGODATA' * 100 # 804 bytes -> 1 cluster
+        readme = b'Hello FiUnamFS\n' * 100 
+        logo = b'\x89PNG' + b'LOGODATA' * 100 
         
         f.seek(data_cluster * cluster_size); f.write(readme)
         readme_clusters = math.ceil(len(readme) / cluster_size)
         f.seek((data_cluster + readme_clusters) * cluster_size); f.write(logo)
         
-        now = format_ts(datetime.datetime.now())
+        now = datetime.datetime.now().strftime('%Y%m%d%H%M%S').encode('ascii')
         
         # 4. Escribir Entradas de Directorio (Entry 0 y Entry 1)
         tipo = b'-'
@@ -531,7 +413,6 @@ def create_test_image(path):
         f.seek(cluster_size * 1); 
         f.write(entry0); 
         f.write(entry1)
-        # El resto del directorio ya está en ceros gracias a la inicialización del archivo.
 
 def run_selftest():
     """
@@ -580,10 +461,9 @@ def run_selftest():
         print('\n--- TEST: list después de delete ---')
         cmd_list(SimpleNamespace(image=img))
         
-        # Verificación de que la entrada 1 ha sido marcada como libre/borrada
+        fs = FiUnamFS(img)
         with open(img, 'rb') as f:
-            sb = read_superblock_from(f)
-            entries = parse_directory(f, sb['cluster_size'], sb['dir_clusters'])
+            entries = fs._parse_directory(f)
             
         if entries[1]['is_unused'] and entries[1]['cluster_init'] == 0:
             print("[SUCCESS] La entrada 1 (logo.png) marcada como libre y cluster=0.")
@@ -596,41 +476,31 @@ def run_selftest():
         print('\nSelftest terminado. Limpiando archivos temporales.')
         shutil.rmtree(tmpdir, ignore_errors=True)
 
-
-# -------------------- CLI--------------------
-
+# -------------------- MAIN --------------------
 def main():
-    parser = argparse.ArgumentParser(description='FiUnamFS tool (version 26-1)')
-    sub = parser.add_subparsers(dest='cmd')
+    p = argparse.ArgumentParser(description='FiUnamFS Manager (OOP Version)')
+    sub = p.add_subparsers(dest='cmd')
     
-    p_info = sub.add_parser('info'); p_info.add_argument('image')
-    p_list = sub.add_parser('list'); p_list.add_argument('image')
+    sub.add_parser('info').add_argument('image')
+    sub.add_parser('list').add_argument('image')
     
-    p_copyout = sub.add_parser('copyout'); 
-    p_copyout.add_argument('image'); 
-    p_copyout.add_argument('name'); 
-    p_copyout.add_argument('out')
+    c_out = sub.add_parser('copyout')
+    c_out.add_argument('image'); c_out.add_argument('name'); c_out.add_argument('out')
     
-    p_copyin = sub.add_parser('copyin'); 
-    p_copyin.add_argument('image'); 
-    p_copyin.add_argument('src'); 
-    p_copyin.add_argument('dest_name')
+    c_in = sub.add_parser('copyin')
+    c_in.add_argument('image'); c_in.add_argument('src'); c_in.add_argument('dest_name')
     
-    p_delete = sub.add_parser('delete'); 
-    p_delete.add_argument('image'); 
-    p_delete.add_argument('name')
+    c_del = sub.add_parser('delete')
+    c_del.add_argument('image'); c_del.add_argument('name')
     
-    p_make = sub.add_parser('makecopy26'); 
-    p_make.add_argument('src'); 
-    p_make.add_argument('dst')
+    mk = sub.add_parser('makecopy26')
+    mk.add_argument('src'); mk.add_argument('dst')
     
-    p_self = sub.add_parser('selftest')
+    sub.add_parser('selftest')
     
-    args = parser.parse_args()
-    
-    if not args.cmd:
-        parser.print_help(); sys.exit(0)
-        
+    args = p.parse_args()
+    if not args.cmd: p.print_help(); sys.exit(0)
+
     if args.cmd == 'info': cmd_info(args)
     elif args.cmd == 'list': cmd_list(args)
     elif args.cmd == 'copyout': cmd_copyout(args)
@@ -638,6 +508,7 @@ def main():
     elif args.cmd == 'delete': cmd_delete(args)
     elif args.cmd == 'makecopy26': cmd_makecopy26(args)
     elif args.cmd == 'selftest': run_selftest()
+    else: p.print_help()
 
 if __name__ == '__main__':
     main()
