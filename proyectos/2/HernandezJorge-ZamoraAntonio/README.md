@@ -107,6 +107,27 @@ Se utilizó la funcionalidad del paso 3 para comprobar que el archivo se puede l
 
 Esta implementación cumple correctamente con el requerimiento de **copiar archivos desde la PC hacia el sistema de archivos**, y sienta las bases para funcionalidades más avanzadas en pasos siguientes como manejo real de clusters libres, archivos mayores a 1 cluster y control de entradas duplicadas.
 
+### 📌  Manejo del espacio libre y asignación real de clusters
+
+En este paso se añadió la capacidad de gestionar de forma correcta qué clusters están en uso dentro del sistema de archivos FiUnamFS. Para ello:
+
+1️⃣ Se recorren las entradas válidas del directorio  
+2️⃣ A partir del tamaño de cada archivo se calcula cuántos clusters ocupa  
+3️⃣ Todos los clusters utilizados se agregan a un conjunto `ocupados`  
+4️⃣ Se recorre la región de datos del FS para localizar el **primer cluster libre**  
+5️⃣ Al copiar archivos nuevos se selecciona un cluster disponible, evitando sobrescritura  
+
+Con esto:
+
+- Ya es posible copiar múltiples archivos al FS
+- Cada uno obtiene una posición independiente dentro de la imagen
+- La lectura de los archivos sigue funcionando correctamente
+- Se detecta cuando la unidad se queda sin espacio real
+
+Esta mejora deja listo el sistema para extender la funcionalidad hacia:
+- Archivos que ocupen más de un cluster
+- Borrado lógico
+- Compactación del espacio
 
 
 

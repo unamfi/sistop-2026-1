@@ -1,5 +1,6 @@
 import sys
 import struct
+import math
 #Sistemas Operativos: Proyecto 2
 # ---------------------------------------------------------------------
 # Hernández Irineo Jorge Manuel
@@ -110,13 +111,30 @@ def buscar_entrada_libre(ruta_imagen, cluster_size, dir_clusters):
     return -1  # No hay espacio
 
 def copiar_a_fiunamfs(ruta_imagen, info, archivo_local, nombre_destino):
+
     cluster_size = info['cluster_size']
 
+    # Obtener clusters ocupados
+    entradas = leer_directorio(ruta_imagen, cluster_size, info['dir_clusters'])
+    ocupados = obtener_clusters_ocupados(entradas, cluster_size)
+
+    # Buscar cluster libre
+    cluster_ini = buscar_cluster_libre(info, ocupados)
+
+    if cluster_ini == -1:
+        print("ERROR: No hay clusters libres para almacenar el archivo.")
+        return False
+
     # Leer archivo desde la PC
-    with open(archivo_local, "rb") as f:
-        data = f.read()
+    try:
+        with open(archivo_local, "rb") as f:
+            data = f.read()
+    except FileNotFoundError:
+        print(f"ERROR: No se encontró el archivo local '{archivo_local}'.")
+        return False
 
     tam = len(data)
+
     if tam > cluster_size:
         print("ERROR: El archivo es demasiado grande (solo soporta <=1 cluster por ahora).")
         return False
@@ -127,36 +145,49 @@ def copiar_a_fiunamfs(ruta_imagen, info, archivo_local, nombre_destino):
         print("ERROR: No hay espacio en el directorio.")
         return False
 
-    # Para este paso: usaremos el primer cluster libre después del directorio
-    cluster_ini = 1 + info['dir_clusters']
-
     with open(ruta_imagen, "r+b") as img:
-        # 1️⃣ Escribir contenido del archivo en la ubicación del cluster
+        # Escribir contenido
         img.seek(cluster_ini * cluster_size)
         img.write(data)
 
-        # 2️⃣ Actualizar entrada del directorio
+        # Actualizar entrada del directorio
         inicio_directorio = cluster_size
         pos_entrada = inicio_directorio + (entrada_idx * 64)
-        img.seek(pos_entrada)
 
-        # Nombre (15 bytes) — pad con espacios
+        img.seek(pos_entrada)
         nombre_bytes = nombre_destino.ljust(15, "\x00").encode("ascii")
         img.write(nombre_bytes)
 
-        # Byte 15: reservado (no lo tocamos)
         img.seek(pos_entrada + 16)
-
-        # Tamaño
         img.write(struct.pack("<I", tam))
 
-        # Cluster inicial
         img.seek(pos_entrada + 24)
         img.write(struct.pack("<I", cluster_ini))
 
-    print(f"Archivo '{nombre_destino}' copiado exitosamente al FS.")
+    print(f"Archivo '{nombre_destino}' copiado exitosamente al FS (cluster {cluster_ini}).")
     return True
 
+
+def obtener_clusters_ocupados(entradas, cluster_size):
+    ocupados = set()
+
+    for _, tam, cluster_ini in entradas:
+        if cluster_ini > 0:
+            usados = math.ceil(tam / cluster_size)
+            for c in range(cluster_ini, cluster_ini + usados):
+                ocupados.add(c)
+
+    return ocupados
+
+def buscar_cluster_libre(info, ocupados):
+    primer_data_cluster = 1 + info["dir_clusters"]
+    total_clusters = info["total_clusters"]
+
+    for c in range(primer_data_cluster, total_clusters):
+        if c not in ocupados:
+            return c
+
+    return -1  # No hay espacio disponible
 
 def main():
     if len(sys.argv) != 2:
