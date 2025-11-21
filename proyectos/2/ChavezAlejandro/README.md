@@ -24,3 +24,10 @@ Se implementó la función "listar_contenido" que:
 2. Itera byte a byte en bloques de 64 bytes (tamaño de entrada de directorio).
 3. Identifica archivos válidos verificando si el primer byte es un punto "." .
 4. Decodifica y limpia el nombre del archivo y extrae su tamaño y cluster inicial.
+
+### Fase 3: Copiado desde FiUnamFS hacia PC
+Se implementó la función "copiar_de_fiunamfs" que:
+1. Recorre el directorio buscando algún archivo con la entrada del usuario.
+2. Hace una limpieza de caracteres nulos y espacios en blanco del nombre almacenado para evitar problemas de reconocimiento (esto pasaba, ya que el nombre del archivo en el FS contenía espacios que conlfictuaban con la entrada del usuario).
+3. Obtiene el cluster inicial y el tamaño del archivo desde la entrada de directorio.
+4. Calcula el offset y genera un archivo local con el contenido extraído ()byte a byte).

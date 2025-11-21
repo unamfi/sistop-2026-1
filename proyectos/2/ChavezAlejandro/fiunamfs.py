@@ -34,7 +34,7 @@ def leer_superbloque(ruta_archivo):
             print(f"Nombre: {nombre_fs}")
             print(f"Versión: {version_fs}")
             print(f"Etiqueta: {etiqueta_vol}")
-            print(f"Tamanio de Cluster: {tam_cluster} bytes")
+            print(f"Tamanioo de Cluster: {tam_cluster} bytes")
             print(f"Clusters de Directorio: {num_cluster_dir}")
             print(f"Clusters Totales: {num_cluster_total}")
             
@@ -67,8 +67,8 @@ def listar_contenido(ruta_archivo):
     #Cada entrada del directorio tiene una longitud fija de 64 bytes
     tam_entrada = 64
 
-    print(f"\nLISTADO DE ARCHIVOS")
-    print(f"{'NOMBRE':<16} {'TAMANIO':<10} {'CLUSTER INICIAL'}")
+    print(f"\n--- LISTADO DE ARCHIVOS ---")
+    print(f"{'NOMBRE':<16} {'TAMAÑO':<10} {'CLUSTER INICIAL'}")
     print("-" * 40)
 
     try:
@@ -90,19 +90,19 @@ def listar_contenido(ruta_archivo):
                 #Se verifica si la entrada corresponde a un archivo valido
                 if tipo_archivo == '.':
                     #Decodificación de la entrada:
-                    #Bytes 1-15: Nombre del archivo (ASCII).
-                    #Bytes 16-19: Cluster inicial (Little Endian).
-                    #Bytes 20-23: Tamanio del archivo (Little Endian).
+                    #Bytes 1-15: Nombre del archivo (ASCII)
+                    #Bytes 16-19: Cluster inicial (Little Endian)
+                    #Bytes 20-23: Tamanio del archivo (Little Endian)
                     
                     raw_nombre = entrada[1:16]
                     
-                    #Se decodifica y se limpian caracteres nulos o espacios para obtener el nombre "real".
+                    #Se decodifica y se limpian caracteres nulos o espacios para obtener el nombre "real"
                     nombre = raw_nombre.decode('ascii', errors='ignore').strip().replace('\x00', '')
                     
                     cluster_inicial = struct.unpack('<I', entrada[16:20])[0]
-                    tamanio = struct.unpack('<I', entrada[20:24])[0]
+                    tamano = struct.unpack('<I', entrada[20:24])[0]
                     
-                    print(f"{nombre:<16} {tamanio:<10} {cluster_inicial}")
+                    print(f"{nombre:<16} {tamano:<10} {cluster_inicial}")
                     
                 elif tipo_archivo == '-':
                     #La entrada esta vacia/disponible (se ignora)
@@ -114,7 +114,82 @@ def listar_contenido(ruta_archivo):
     except Exception as e:
         print(f"Error al listar directorio: {e}")
 
+# TERCERA SECCION
+
+def copiar_de_fiunamfs(ruta_fs, nombre_objetivo):
+    #Se busca un archivo por nombre en el FS y se copia al directorio actual
+    
+    tam_cluster = 1024
+    inicio_directorio = tam_cluster * 1
+    fin_directorio = inicio_directorio + (tam_cluster * 4)
+    tam_entrada = 64
+    
+    #Se asegura que el nombre buscado no tenga espacios extra
+    nombre_objetivo = nombre_objetivo.strip()
+
+    print(f"\n--- INTENTANDO COPIAR: '{nombre_objetivo}' ---")
+
+    try:
+        with open(ruta_fs, 'rb') as f:
+            f.seek(inicio_directorio)
+            
+            archivo_encontrado = False
+            
+            while f.tell() < fin_directorio:
+                entrada = f.read(tam_entrada)
+                if len(entrada) < tam_entrada:
+                    break
+                
+                tipo = chr(entrada[0])
+                
+                if tipo == '.':
+                    raw_nombre = entrada[1:16]
+                    
+                    #Se agrega esto ya que inicialmente los archivos tienen espacios al final de los nombres que hacen
+                    #que no coincidan con el input del usuario
+                    #Primero se eliminan los nulos, luego se quitan los espacios.
+                    nombre_limpio = raw_nombre.decode('ascii', errors='ignore').replace('\x00', '').strip()
+                    
+                    #para debug
+                    #print(f"Comparando: '{nombre_limpio}' vs '{nombre_objetivo}'") 
+
+                    if nombre_limpio == nombre_objetivo:
+                        #Se encuentra el archivo con el nombre que se lee
+                        cluster_init = struct.unpack('<I', entrada[16:20])[0]
+                        tamano_archivo = struct.unpack('<I', entrada[20:24])[0]
+                        
+                        print(f"Archivo encontrado en cluster {cluster_init} con tamanio {tamano_archivo}")
+                        
+                        #Se guarda la posicion actual del directorio para no perderla
+                        posicion_dir = f.tell()
+                        
+                        #Se calcula la ubicacion absoluta de los datos
+                        offset_datos = cluster_init * tam_cluster
+                        
+                        #Se mueve el puntero a la ubicacion de los datos
+                        f.seek(offset_datos)
+                        datos = f.read(tamano_archivo)
+                        
+                        #Se escribe el archivo en la maquina local
+                        with open(nombre_objetivo, 'wb') as salida:
+                            salida.write(datos)
+                            
+                        print(f"[Exito] Archivo '{nombre_objetivo}' copiado a la maquina local")
+                        archivo_encontrado = True
+                        break
+            
+            if not archivo_encontrado:
+                print(f"[Error] El archivo '{nombre_objetivo}' no existe en el sistema FiUnamFS")
+
+    except Exception as e:
+        print(f"Error al copiar archivo: {e}")
+
+
+
+
 if __name__ == "__main__":
-    #Se ejecuta la funcion principal
     leer_superbloque("fiunamfs.img")
     listar_contenido("fiunamfs.img")
+    
+    archivo_a_copiar = input("\nEscribe el nombre del archivo a copiar: ")
+    copiar_de_fiunamfs("fiunamfs.img", archivo_a_copiar)
