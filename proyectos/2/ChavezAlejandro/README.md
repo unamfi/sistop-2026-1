@@ -43,3 +43,9 @@ Se implementó la función "eliminar_archivo" que:
 1. Encuentra la entrada del archivo en el directorio mediante comparación de nombre.
 2. Sobrescribe el byte de tipo con "-" (0x2F) y el nombre con una cadena de puntos.
 3. Libera la entrada del directorio para ser reutilizado sin necesidad de borrar "físicamente" los datos del cluster.
+
+### Actualización de la fase 4: Validación de duplicados y longitud de nombre 
+Se detectó y corrigió un error que permitía la creación de múltiples archivos con el mismo nombre.
+1. Se añadió una seccion de validación en la función "copiar_a_fiunamfs" para evitar duplicados.
+2. El sistema ahora verifica si hay un archivo con el mismo nombre en el directorio antes de iniciar la asignación de espacio o los hilos de transferencia.
+3. Se añadió una seccion de validación en la función "copiar_a_fiunamfs" para evitar que el nombre del archivo a copiar tenga una longitud >15 caracteres (puede corromper archivos al cortar sus nombres a <15 caracteres).

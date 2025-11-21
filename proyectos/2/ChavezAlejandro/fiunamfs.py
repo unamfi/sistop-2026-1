@@ -314,6 +314,43 @@ def copiar_a_fiunamfs(ruta_fs, ruta_archivo_local):
     nombre_archivo = os.path.basename(ruta_archivo_local)
     tamano_archivo = os.path.getsize(ruta_archivo_local)
     
+    #Validacion de longitud de nombre
+    #Para evitar que se incluyan archivos con nombres largos >15 caracteres
+    #ya que se pueden corromper al cortar el nombre del archivo
+    if len(nombre_archivo) > 15:
+        print(f"[Error] El nombre '{nombre_archivo}' es muy largo (max 15 caracteres)")
+        return
+
+    #Se valida que el archivo no exista ya en la img
+    #Se recorre el directorio para verificar que el archivo no exista ya
+    tam_cluster = 1024
+    inicio_dir = 1024
+    fin_dir = inicio_dir + (tam_cluster * 4)
+    tam_entrada = 64
+    existe = False
+    
+    try:
+        with open(ruta_fs, 'rb') as f:
+            f.seek(inicio_dir)
+            while f.tell() < fin_dir:
+                entrada = f.read(tam_entrada)
+                if len(entrada) < tam_entrada: break
+                
+                #Si es un archivo valido (empieza con punto)
+                if chr(entrada[0]) == '.':
+                    raw_nombre = entrada[1:16]
+                    nombre_limpio = raw_nombre.decode('ascii', errors='ignore').replace('\x00', '').strip()
+                    if nombre_limpio == nombre_archivo:
+                        existe = True
+                        break
+    except Exception as e:
+        print(f"Error al verificar duplicados: {e}")
+        return
+
+    if existe:
+        print(f"[Error] El archivo '{nombre_archivo}' ya existe en FiUnamFS")
+        return
+
     #Calculo de clusters necesarios
     tam_cluster = 1024
     clusters_necesarios = (tamano_archivo // tam_cluster) + (1 if tamano_archivo % tam_cluster > 0 else 0)
