@@ -1,0 +1,880 @@
+** Alvarez Eduardo, Jimenez Evelin, Lara Emmanuel
+- Documentación :: [[./AlvarezEduardo-JimenezEvelin-LaraEmmanuel/Portada SO.pdf][Portada SO.pdf]], [[./AlvarezEduardo-JimenezEvelin-LaraEmmanuel/README.md][README.md]], [[./AlvarezEduardo-JimenezEvelin-LaraEmmanuel/readme_fuse.md][readme_fuse.md]]
+- Programas :: [[./AlvarezEduardo-JimenezEvelin-LaraEmmanuel/src/FUSE/fiunamfs_fuse.py][fiunamfs_fuse.py]], [[./AlvarezEduardo-JimenezEvelin-LaraEmmanuel/src/constantes.py][constantes.py]], [[./AlvarezEduardo-JimenezEvelin-LaraEmmanuel/src/entradas.py][entradas.py]], [[./AlvarezEduardo-JimenezEvelin-LaraEmmanuel/src/estado.py][estado.py]],
+  [[./AlvarezEduardo-JimenezEvelin-LaraEmmanuel/src/fiunamfs.py][fiunamfs.py]], [[./AlvarezEduardo-JimenezEvelin-LaraEmmanuel/src/gui_fiunamfs.py][gui_fiunamfs.py]], [[./AlvarezEduardo-JimenezEvelin-LaraEmmanuel/src/monitor.py][monitor.py]], [[./AlvarezEduardo-JimenezEvelin-LaraEmmanuel/src/sistema.py][sistema.py]]
+- Otros archivos :: [[./AlvarezEduardo-JimenezEvelin-LaraEmmanuel/docs/images/Ejemplo.png][Ejemplo.png]], [[./AlvarezEduardo-JimenezEvelin-LaraEmmanuel/docs/images/caso_prueba_1_1.jpeg][caso_prueba_1_1.jpeg]],
+  [[./AlvarezEduardo-JimenezEvelin-LaraEmmanuel/docs/images/caso_prueba_1_2.jpeg][caso_prueba_1_2.jpeg]], [[./AlvarezEduardo-JimenezEvelin-LaraEmmanuel/docs/images/caso_prueba_1_3.jpeg][caso_prueba_1_3.jpeg]], [[./AlvarezEduardo-JimenezEvelin-LaraEmmanuel/docs/images/caso_prueba_1_4.jpeg][caso_prueba_1_4.jpeg]],
+  [[./AlvarezEduardo-JimenezEvelin-LaraEmmanuel/docs/images/logo.png][logo.png]], [[./AlvarezEduardo-JimenezEvelin-LaraEmmanuel/docs/images/saludo.jpg][saludo.jpg]], [[./AlvarezEduardo-JimenezEvelin-LaraEmmanuel/fiunamfs/fiunamfs.img][fiunamfs.img]]
+- Concurrencia/sincronización :
+  - Hilo monitor implementado como /daemon/
+  - Uso de locks para sincronización
+  - Comunicación de estado entre hilos mediante objeto EstadoFS compartido
+- Interfaz ::
+  - GUI completa con PyQt5
+  - CLI interactivo
+  - Módulo FUSE funcional con operaciones POSIX
+- Comentarios ::
+  - Entregaron en un repositorio externo, subiendo al repositorio de la
+    materia únicamente [[https://github.com/emm05lara/Proyecto_Sistema_Archivos/][una liga hacia éste]]. ¿Por qué?
+  - El proyecto fue entregado por tres personas.
+    - El planteamiento del proyecto marcaba que sería de forma individual o
+      en equipos de dos
+    - No me notificaron de este cambio de decisión sino hasta el momento
+      mismo de hacer su entrega. En este caso... ¡Más vale pedir permiso
+      que pedir perdón! 😉
+    - ¡Y el proyecto daba para hacer dos entregas diferentes! Tienen
+      distintos /front-ends/, y está desarrollado de forma muy
+      interesante... ¡Era cosa de explicar /un poco nomás/! 🙁
+    - Me veo en la necesidad de descontar un punto final a la entrega 🙁
+  - Documentación extensa en README
+  - Código comentado adecuadamente
+    - Explica problemas y soluciones (buffers temporales en FUSE)
+  - Tanto en el modo de consola como en el gráfico, tendrían que ocultar
+    las entradas vacías
+  - Intenté copiar un archivo de 4Kb a fiunamfs, y me indica que:
+    #+begin_src text
+      [MONITOR] Clusters libres aprox.: 1192 (1192.00 KiB)
+      [ERROR] No hay entradas libres.
+    #+end_src
+    - Este comportamiento se presenta intermitentemente; creo que está
+      relacionado con el manejo de las entradas del directorio.
+    - No me queda del todo claro cómo es que manejan la asignación... Va
+      dejando huecos a veces (pero otras no)... Debe haber un fallo lógico
+      en esa parte.
+- Aspectos técnicos destacados ::
+  - Manejo correcto de formato FiUnamFS
+  - Validación de nombres,
+  - Separación clara backend/frontend
+  - Implementación completa de operaciones FUSE
+
+|--------------------------+---------+------+--------|
+| Rubro                    | Parcial | Peso | Puntos |
+|--------------------------+---------+------+--------|
+| Proyecto                 |         |  0.3 |   3.00 |
+| Cumplimiento             |      10 |      |   1.00 |
+| Claridad de desarrollo   |      10 |      |   1.00 |
+| Interfaz usuario         |      10 |      |   1.00 |
+|--------------------------+---------+------+--------|
+| Desarrollo               |         |  0.3 |   2.50 |
+| Directorio de proyecto   |     7.5 |      |   0.75 |
+| Código válido            |      10 |      |   1.00 |
+| Comentarios              |     7.5 |      |   0.75 |
+|--------------------------+---------+------+--------|
+| Legibilidad              |         |  0.2 |   2.00 |
+| Estructura               |      10 |      |   1.00 |
+| Nomenclatura             |      10 |      |   1.00 |
+|--------------------------+---------+------+--------|
+| Entrega                  |         |  0.2 |   2.01 |
+| Documentación externa    |      10 |      |   0.67 |
+| Entorno y dependencias   |      10 |      |   0.67 |
+| Historia en Git          |      10 |      |   0.67 |
+|--------------------------+---------+------+--------|
+| TOTAL                    |         |      |   9.51 |
+| Menos un punto (por      |         |      |        |
+| equipo demasiado grande) |         |      |   8.51 |
+|--------------------------+---------+------+--------|
+#+TBLFM: @2$4=min(10, @3+@4+@5);f2::@3$4=$2 * @2$3/3;f2::@4$4=$2 * @2$3/3;f2::@5$4=$2 * @2$3/3;f2::@6$4=min(10, @7+@8+@9);f2::@7$4=$2 * @6$3/3;f2::@8$4=$2 * @6$3/3;f2::@9$4=$2 * @6$3/3;f2::@10$4=min(10, @11+@12);f2::@11$4=$2 * @10$3/2;f2::@12$4=$2 * @10$3/2;f2::@13$4=min(10.0, @14+@15+@16);f2::@14$4=$2 * @13$3/3;f2::@15$4=$2 * @13$3/3;f2::@16$4=$2 * @13$3/3;f2::@17$4=@2$4+@6$4+@10$4+@13$4;f2::@19$4=@17 - 1
+
+** Avila Alonso, Medina Samuel
+- Documentación :: [[./AvilaAlonso-MedinaSamuel/Proyecto_2.pdf][Proyecto_2.pdf]]
+- Programas :: [[./AvilaAlonso-MedinaSamuel/modules/directory_entry.py][directory_entry.py]], [[./AvilaAlonso-MedinaSamuel/modules/filesystem.py][filesystem.py]], [[./AvilaAlonso-MedinaSamuel/modules/utils.py][utils.py]], [[./AvilaAlonso-MedinaSamuel/proyecto2.py][proyecto2.py]]
+- Concurrencia/sincronización ::
+  - Excelente implementación, emplando RLock, Condition variables y
+    Event.
+  - Múltiples hilos: operaciones concurrentes, monitor de integridad y
+    actualización GUI.
+  - Buena sincronización entre componentes.
+- Interfaz ::
+  - GUI completa con Tkinter.
+  - Listado, extracción, agregado y eliminación múltiple.
+  - Responsiva durante operaciones largas.
+  - Validaciones integradas.
+- Comentarios ::
+  - Código bien comentado. Explican lógica sin redundancia. Documentan
+    clases y métodos principales claramente.
+- Aspectos técnicos destacados ::
+  - Arquitectura bien estructurada en capas separadas
+  - Manejo correcto del formato FiUnamFS (superbloque, directorio, clusters)
+  - Validaciones en operaciones de archivos
+  - GUI que se actualiza automáticamente mediante notificaciones
+  - Más de 5 commits en Git con información descriptiva
+
+|------------------------+---------+------+--------|
+| Rubro                  | Parcial | Peso | Puntos |
+|------------------------+---------+------+--------|
+| Proyecto               |         |  0.3 |   3.00 |
+| Cumplimiento           |      10 |      |   1.00 |
+| Claridad de desarrollo |      10 |      |   1.00 |
+| Interfaz usuario       |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Desarrollo             |         |  0.3 |   3.00 |
+| Directorio de proyecto |      10 |      |   1.00 |
+| Código válido          |      10 |      |   1.00 |
+| Comentarios            |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Legibilidad            |         |  0.2 |   2.00 |
+| Estructura             |      10 |      |   1.00 |
+| Nomenclatura           |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Entrega                |         |  0.2 |   2.00 |
+| Documentación externa  |      10 |      |   0.67 |
+| Entorno y dependencias |      10 |      |   0.67 |
+| Historia en Git        |      10 |      |   0.67 |
+|------------------------+---------+------+--------|
+| TOTAL                  |         |      |     10 |
+|------------------------+---------+------+--------|
+#+TBLFM: @2$4=min(10, @3+@4+@5);f2::@3$4=$2 * @2$3/3;f2::@4$4=$2 * @2$3/3;f2::@5$4=$2 * @2$3/3;f2::@6$4=min(10, @7+@8+@9);f2::@7$4=$2 * @6$3/3;f2::@8$4=$2 * @6$3/3;f2::@9$4=$2 * @6$3/3;f2::@10$4=min(10, @11+@12);f2::@11$4=$2 * @10$3/2;f2::@12$4=$2 * @10$3/2;f2::@13$4=min(10.0, @14+@15+@16);f2::@14$4=$2 * @13$3/3;f2::@15$4=$2 * @13$3/3;f2::@16$4=$2 * @13$3/3;f2::@17$4=@2$4+@6$4+@10$4+@13$4;f2
+
+** Castañeda Ariana, Echevarria Luis
+- Documentación :: [[./CastañedaAriana-EchevarriaLuis/README.md][README.md]]
+- Programas :: [[./CastañedaAriana-EchevarriaLuis/fiunamfs.py][fiunamfs.py]], [[./CastañedaAriana-EchevarriaLuis/interfaz_fiunamfs.py][interfaz_fiunamfs.py]]
+- Concurrencia/sincronización ::
+  - Implementación sólida con Lock global y patrón productor-consumidor
+  - Cola de trabajo (Queue) para operaciones asíncronas
+  - Hilo worker daemon procesa tareas sin bloquear interfaz
+  - Sincronización adecuada para operaciones de E/S
+- Interfaz ::
+  - GUI moderna y profesional con Tkinter
+  - Tabla visual con información completa de archivos
+  - Validación automática de versión con reparación integrada
+  - Barra de estado con métricas de uso del disco
+- Comentarios ::
+  - Documentación excelente en docstrings y comentarios
+  - Explican decisiones de diseño y lógica de implementación
+  - Código bien documentado sin redundancia
+- Aspectos técnicos destacados ::
+  - Arquitectura MVC clara: backend (fiunamfs.py) y frontend separados
+  - Manejo robusto de errores y validaciones
+  - Sistema de reparación automática para discos con versión incorrecta
+  - Suite de pruebas automáticas (selftest) completa
+  - Backup automático antes de operaciones destructivas
+
+|------------------------+---------+------+--------|
+| Rubro                  | Parcial | Peso | Puntos |
+|------------------------+---------+------+--------|
+| Proyecto               |         |  0.3 |   3.00 |
+| Cumplimiento           |      10 |      |   1.00 |
+| Claridad de desarrollo |      10 |      |   1.00 |
+| Interfaz usuario       |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Desarrollo             |         |  0.3 |   3.00 |
+| Directorio de proyecto |      10 |      |   1.00 |
+| Código válido          |      10 |      |   1.00 |
+| Comentarios            |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Legibilidad            |         |  0.2 |   1.75 |
+| Estructura             |      10 |      |   1.00 |
+| Nomenclatura           |     7.5 |      |   0.75 |
+|------------------------+---------+------+--------|
+| Entrega                |         |  0.2 |   2.00 |
+| Documentación externa  |      10 |      |   0.67 |
+| Entorno y dependencias |      10 |      |   0.67 |
+| Historia en Git        |      10 |      |   0.67 |
+|------------------------+---------+------+--------|
+| TOTAL                  |         |      |   9.75 |
+|------------------------+---------+------+--------|
+#+TBLFM: @2$4=min(10, @3+@4+@5);f2::@3$4=$2 * @2$3/3;f2::@4$4=$2 * @2$3/3;f2::@5$4=$2 * @2$3/3;f2::@6$4=min(10, @7+@8+@9);f2::@7$4=$2 * @6$3/3;f2::@8$4=$2 * @6$3/3;f2::@9$4=$2 * @6$3/3;f2::@10$4=min(10, @11+@12);f2::@11$4=$2 * @10$3/2;f2::@12$4=$2 * @10$3/2;f2::@13$4=min(10.0, @14+@15+@16);f2::@14$4=$2 * @13$3/3;f2::@15$4=$2 * @13$3/3;f2::@16$4=$2 * @13$3/3;f2::@17$4=@2$4+@6$4+@10$4+@13$4;f2
+
+** Chavez Alejandro
+- Documentación :: [[./ChavezAlejandro/README.md][README.md]], [[./ChavezAlejandro/Sistemas_Operativos_P2.pdf][Sistemas_Operativos_P2.pdf]]
+- Programas :: [[./ChavezAlejandro/fiunamfs.py][fiunamfs.py]], [[./ChavezAlejandro/interfaz.py][interfaz.py]]
+- Otros archivos :: [[./ChavezAlejandro/fiunamfs.img][fiunamfs.img]]
+- Concurrencia/sincronización ::
+  - Implementación básica con un hilo de lectura y uno de escritura
+  - Uso de hilos y de una cola (=Queue=) para transferencia de datos
+  - Sincronización adecuada entre hilos de lectura/escritura
+- Interfaz ::
+  - GUI funcional con tema de colores personalizado 🤓
+  - Tabla básica con información esencial de archivos
+  - Operaciones principales implementadas
+- Comentarios ::
+  - Documentación adecuada en código y documentación externa
+  - Explican problemas encontrados y soluciones implementadas
+  - No incluye información de fechas de creación/modificación
+  - No incluye a =fiunamfs.img= (que será modificado) en un =.gitignore=
+- Aspectos técnicos destacados ::
+  - Manejo correcto de formato FiUnamFS
+  - Validación de duplicados y longitud de nombres
+  - Lógica de asignación contigua para espacio libre
+  - Separación clara entre backend y frontend
+
+|------------------------+---------+------+--------|
+| Rubro                  | Parcial | Peso | Puntos |
+|------------------------+---------+------+--------|
+| Proyecto               |         |  0.3 |   2.75 |
+| Cumplimiento           |      10 |      |   1.00 |
+| Claridad de desarrollo |     7.5 |      |   0.75 |
+| Interfaz usuario       |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Desarrollo             |         |  0.3 |   2.75 |
+| Directorio de proyecto |     7.5 |      |   0.75 |
+| Código válido          |      10 |      |   1.00 |
+| Comentarios            |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Legibilidad            |         |  0.2 |   1.75 |
+| Estructura             |     7.5 |      |   0.75 |
+| Nomenclatura           |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+|                        |         |  0.2 |   1.50 |
+| Documentación externa  |     7.5 |      |   0.50 |
+| Entorno y dependencias |     7.5 |      |   0.50 |
+| Historia en Git        |     7.5 |      |   0.50 |
+|------------------------+---------+------+--------|
+| TOTAL                  |         |      |   8.75 |
+|------------------------+---------+------+--------|
+#+TBLFM: @2$4=min(10, @3+@4+@5);f2::@3$4=$2 * @2$3/3;f2::@4$4=$2 * @2$3/3;f2::@5$4=$2 * @2$3/3;f2::@6$4=min(10, @7+@8+@9);f2::@7$4=$2 * @6$3/3;f2::@8$4=$2 * @6$3/3;f2::@9$4=$2 * @6$3/3;f2::@10$4=min(10, @11+@12);f2::@11$4=$2 * @10$3/2;f2::@12$4=$2 * @10$3/2;f2::@13$4=min(10.0, @14+@15+@16);f2::@14$4=$2 * @13$3/3;f2::@15$4=$2 * @13$3/3;f2::@16$4=$2 * @13$3/3;f2::@17$4=@2$4+@6$4+@10$4+@13$4;f2
+
+** Escobar Victor, Hernandez Josue
+- Documentación :: [[./EscobarVictor_HernandezJosue/proyecto_fs/README.md][README.md]]
+- Programas :: [[./EscobarVictor_HernandezJosue/proyecto_fs/fiunamfs_tool.py][fiunamfs_tool.py]]
+- Otros archivos :: [[./EscobarVictor_HernandezJosue/proyecto_fs/nuevo.txt][nuevo.txt]], [[./EscobarVictor_HernandezJosue/proyecto_fs/prueba.txt][prueba.txt]], [[./EscobarVictor_HernandezJosue/proyecto_fs/prueba_extraida.txt][prueba_extraida.txt]],
+  [[./EscobarVictor_HernandezJosue/proyecto_fs/saludo_extraido.jpg][saludo_extraido.jpg]]
+- Concurrencia/sincronización ::
+  - Implementación básica con un /«Read-Write Lock»/ personalizado,
+    empleado utilizando una variable de condición. ¡Interesante! 😮
+  - Dos hilos de ejecución (lectura/escritura)
+  - Sincronización adecuada
+- Interfaz ::
+  - Interfaz de línea de comandos funcional pero básica
+    - Simulando el funcionamiento de herramientas CLI Unix
+  - Requiere comprender documentación para uso correcto
+  - No incluye interfaz gráfica ni navegación intuitiva
+  - No oculta las entradas vacías en el directorio 🙁
+- Comentarios ::
+  - Documentación adecuada en código con docstrings
+  - ¡Dejen que sea el código el que hable! 😉 No ganamos mucho replicando
+    archivos como =saludo_extraido.jpg=, ni sirven mayor propósito los
+    =*.txt=, sólo /ensucian/ al directorio 🙁
+- Aspectos técnicos destacados ::
+  - Manejo correcto de formato FiUnamFS
+  - Procesamiento adecuado de estructuras binarias
+  - Buen manejo de parser de funciones empleando =ArgumentParser=
+
+|------------------------+---------+------+--------|
+| Rubro                  | Parcial | Peso | Puntos |
+|------------------------+---------+------+--------|
+| Proyecto               |         |  0.3 |   2.25 |
+| Cumplimiento           |      10 |      |   1.00 |
+| Claridad de desarrollo |     7.5 |      |   0.75 |
+| Interfaz usuario       |       5 |      |   0.50 |
+|------------------------+---------+------+--------|
+| Desarrollo             |         |  0.3 |   2.50 |
+| Directorio de proyecto |     7.5 |      |   0.75 |
+| Código válido          |      10 |      |   1.00 |
+| Comentarios            |     7.5 |      |   0.75 |
+|------------------------+---------+------+--------|
+| Legibilidad            |         |  0.2 |   1.75 |
+| Estructura             |      10 |      |   1.00 |
+| Nomenclatura           |     7.5 |      |   0.75 |
+|------------------------+---------+------+--------|
+| Entrega                |         |  0.2 |   1.84 |
+| Documentación externa  |     7.5 |      |   0.50 |
+| Entorno y dependencias |      10 |      |   0.67 |
+| Historia en Git        |      10 |      |   0.67 |
+|------------------------+---------+------+--------|
+| TOTAL                  |         |      |   8.34 |
+|------------------------+---------+------+--------|
+#+TBLFM: @2$4=min(10, @3+@4+@5);f2::@3$4=$2 * @2$3/3;f2::@4$4=$2 * @2$3/3;f2::@5$4=$2 * @2$3/3;f2::@6$4=min(10, @7+@8+@9);f2::@7$4=$2 * @6$3/3;f2::@8$4=$2 * @6$3/3;f2::@9$4=$2 * @6$3/3;f2::@10$4=min(10, @11+@12);f2::@11$4=$2 * @10$3/2;f2::@12$4=$2 * @10$3/2;f2::@13$4=min(10.0, @14+@15+@16);f2::@14$4=$2 * @13$3/3;f2::@15$4=$2 * @13$3/3;f2::@16$4=$2 * @13$3/3;f2::@17$4=@2$4+@6$4+@10$4+@13$4;f2
+
+** Gabriel Yukioayax
+- Documentación :: [[./GabrielYukioayax/Sistema de Archivos.pdf][Sistema de Programas.pdf]]
+- Programas :: [[./GabrielYukioayax/Proyecto 2/Entrada.java][Entrada.java]], [[./GabrielYukioayax/Proyecto 2/GestorDisco.java][GestorDisco.java]], [[./GabrielYukioayax/Proyecto 2/InterfazGrafica.java][InterfazGrafica.java]], [[./GabrielYukioayax/Proyecto 2/Main.java][Main.java]]
+- Otros archivos :: [[./GabrielYukioayax/Proyecto 2/fiunamfs.img][fiunamfs.img]]
+- Concurrencia/sincronización ::
+  - Implementación básica con hilos para operaciones de disco
+  - Uso de Thread separado para evitar bloqueo de interfaz gráfica
+  - Modelo "Hilo Principal vs. Hilo de Trabajo" para operaciones pesadas
+- Interfaz ::
+  - GUI funcional con /Swing/ y tema de colores personalizado
+  - Botones claros para operaciones principales
+  - Consola integrada con redirección de =System.out=
+  - Navegación intuitiva sin requerir documentación extensa
+- Comentarios ::
+  - Documentación externa completa en PDF con explicación técnica detallada
+  - Explica problemas encontrados (/Endianness/) y soluciones implementadas
+  - Incluye .gitignore para archivos compilados
+- Aspectos técnicos destacados ::
+  - No pude replicar el funcionamiento en mi computadora 🙁
+    - Confío en que funciona por tus capturas y por el detalle con que lo
+      describes
+    - Me lanza únicamente una ventana titulada “Explorador FiUnamFS”, pero
+      permanece en blanco, y no aparece nada en la consola.
+    - En la documentación mencionas a Java, pero no la versión específica
+      del JDK... entiendo que en ese lenguaje resulta importante
+      hacerlo, pues es frecuente que haya cambios incompatibles entre
+      versiones mayores. ¿Será eso? 😕
+  - Manejo correcto de formato Little Endian con ByteBuffer. Buena
+    explicación de la complicación, y buena descripción de cómo lo
+    resolviste 🤓
+  - Separación clara entre lógica de disco (=GestorDisco=) e interfaz
+  - Validación de estructura =FiUnamFS= y procesamiento de directorio
+
+|------------------------+---------+------+--------|
+| Rubro                  | Parcial | Peso | Puntos |
+|------------------------+---------+------+--------|
+| Proyecto               |         |  0.3 |   2.75 |
+| Cumplimiento           |      10 |      |   1.00 |
+| Claridad de desarrollo |     7.5 |      |   0.75 |
+| Interfaz usuario       |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Desarrollo             |         |  0.3 |   2.75 |
+| Directorio de proyecto |      10 |      |   1.00 |
+| Código válido          |     7.5 |      |   0.75 |
+| Comentarios            |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Legibilidad            |         |  0.2 |   1.75 |
+| Estructura             |     7.5 |      |   0.75 |
+| Nomenclatura           |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Entrega                |         |  0.2 |   1.84 |
+| Documentación externa  |      10 |      |   0.67 |
+| Entorno y dependencias |     7.5 |      |   0.50 |
+| Historia en Git        |      10 |      |   0.67 |
+|------------------------+---------+------+--------|
+| TOTAL                  |         |      |   9.09 |
+|------------------------+---------+------+--------|
+#+TBLFM: @2$4=min(10, @3+@4+@5);f2::@3$4=$2 * @2$3/3;f2::@4$4=$2 * @2$3/3;f2::@5$4=$2 * @2$3/3;f2::@6$4=min(10, @7+@8+@9);f2::@7$4=$2 * @6$3/3;f2::@8$4=$2 * @6$3/3;f2::@9$4=$2 * @6$3/3;f2::@10$4=min(10, @11+@12);f2::@11$4=$2 * @10$3/2;f2::@12$4=$2 * @10$3/2;f2::@13$4=min(10.0, @14+@15+@16);f2::@14$4=$2 * @13$3/3;f2::@15$4=$2 * @13$3/3;f2::@16$4=$2 * @13$3/3;f2::@17$4=@2$4+@6$4+@10$4+@13$4;f2
+
+** Garcia Emilio, Rivas Maria
+- Documentación :: [[./GarciaEmilio-RivasMaria/proyecto2_SisOp.pdf][proyecto2_SisOp.pdf]]
+- Programas :: [[./GarciaEmilio-RivasMaria/main.py][main.py]]
+- Otros archivos :: [[./GarciaEmilio-RivasMaria/fiunamfs.img][fiunamfs.img]]
+- Concurrencia/sincronización ::
+  - Implementación robusta con patrón productor-consumidor usando colas
+  - Hilo "Mover" dedicado para operaciones de E/S con sincronización
+    adecuada
+  - Separación clara entre hilo principal (interfaz) y hilo trabajador
+    (operaciones)
+  - *Ojo:* La situación que mencionan en la documentación, «Si llega a
+    salir un mensaje como “La operación ya tomó mucho tiempo”, puede
+    deberse a saturación del hilo trabajador; solo reintenta», es
+    indicativa de una /condición de carrera/.
+    - ¡Reintentar una operación desde el mismo punto /siempre debería
+      llevar/ al mismo resultado!
+- Interfaz ::
+  - Menú de consola funcional con opciones completas
+  - Navegación textual que requiere comprender documentación para uso
+    óptimo
+  - Información detallada del sistema y archivos bien presentada
+  - Manejo curioso de =input_files= y =output_files=. No me parece
+    particularmente práctico, pero es una solución ingeniosa 😉
+- Comentarios ::
+  - Documentación externa completa con manual de usuario detallado
+  - Baja densidad de comentarios
+  - Explica problemas de implementación y soluciones (seguridad en borrado)
+  - Estructura de proyecto clara con separación de responsabilidades
+- Aspectos técnicos destacados ::
+  - Implementación OOP robusta con clases File_system, Mover, Cluster, File
+  - Manejo correcto de formato FiUnamFS con procesamiento de superbloque
+  - Algoritmo de asignación contigua para espacio libre
+  - Cálculos de eficiencia y fragmentación interna
+
+|------------------------+---------+------+--------|
+| Rubro                  | Parcial | Peso | Puntos |
+|------------------------+---------+------+--------|
+| Proyecto               |         |  0.3 |   2.50 |
+| Cumplimiento           |      10 |      |   1.00 |
+| Claridad de desarrollo |     7.5 |      |   0.75 |
+| Interfaz usuario       |     7.5 |      |   0.75 |
+|------------------------+---------+------+--------|
+| Desarrollo             |         |  0.3 |   2.75 |
+| Directorio de proyecto |      10 |      |   1.00 |
+| Código válido          |      10 |      |   1.00 |
+| Comentarios            |     7.5 |      |   0.75 |
+|------------------------+---------+------+--------|
+| Legibilidad            |         |  0.2 |   1.75 |
+| Estructura             |      10 |      |   1.00 |
+| Nomenclatura           |     7.5 |      |   0.75 |
+|------------------------+---------+------+--------|
+| Entrega                |         |  0.2 |   1.84 |
+| Documentación externa  |      10 |      |   0.67 |
+| Entorno y dependencias |     7.5 |      |   0.50 |
+| Historia en Git        |      10 |      |   0.67 |
+|------------------------+---------+------+--------|
+| TOTAL                  |         |      |   8.84 |
+|------------------------+---------+------+--------|
+#+TBLFM: @2$4=min(10, @3+@4+@5);f2::@3$4=$2 * @2$3/3;f2::@4$4=$2 * @2$3/3;f2::@5$4=$2 * @2$3/3;f2::@6$4=min(10, @7+@8+@9);f2::@7$4=$2 * @6$3/3;f2::@8$4=$2 * @6$3/3;f2::@9$4=$2 * @6$3/3;f2::@10$4=min(10, @11+@12);f2::@11$4=$2 * @10$3/2;f2::@12$4=$2 * @10$3/2;f2::@13$4=min(10.0, @14+@15+@16);f2::@14$4=$2 * @13$3/3;f2::@15$4=$2 * @13$3/3;f2::@16$4=$2 * @13$3/3;f2::@17$4=@2$4+@6$4+@10$4+@13$4;f2
+
+** Gonzalez Michelle
+- Documentación :: [[./GonzalezMichelle/linkDelRepositorio.txt][linkDelRepositorio.txt]], [[./FUSE_QUICKSTART.md][FUSE_QUICKSTART.md]],
+  [[./INSTRUCCIONES_FUSE.md][INSTRUCCIONES_FUSE.md]], [[./README.md][README.md]]
+- Programas :: [[./mount_fiunamfs.py][mount_fiunamfs.py]], [[./src/__init__.py][__init__.py]], [[./src/fiunamfs_manager.py][fiunamfs_manager.py]],
+  [[./src/fuse_mount.py][fuse_mount.py]], [[./src/models/__init__.py][__init__.py]], [[./src/models/directory_entry.py][directory_entry.py]], [[./src/models/filesystem.py][filesystem.py]],
+  [[./src/models/superblock.py][superblock.py]], [[./src/services/__init__.py][__init__.py]], [[./src/services/io_thread.py][io_thread.py]], [[./src/services/ui_thread.py][ui_thread.py]], [[./src/utils/__init__.py][__init__.py]],
+  [[./src/utils/binary_utils.py][binary_utils.py]], [[./src/utils/exceptions.py][exceptions.py]], [[./src/utils/validation.py][validation.py]]
+- Otros archivos :: 
+  - Implementación robusta de arquitectura de 2 hilos (UI + I/O)
+  - Uso correcto de queue.Queue para comunicación, libre de problemas de
+    concurrencia
+  - Sincronización adecuada, con patrón /single-writer/
+- Interfaz ::
+  - Doble interfaz
+    - CLI funcional con operaciones básicas
+    - Módulo FUSE completo que permite montaje como directorio nativo
+  - Validaciones exhaustivas y mensajes de error informativos
+- Comentarios ::
+  - La entrega se realizó en un repositorio externo (pero justificado y
+    notificado con tiempo por correo).
+  - Documentación excelente en código (docstrings) y externa (README,
+    guías)
+  - Explicación clara de arquitectura y decisiones de diseño
+  - Excelente modularidad, muy buen manejo de decoradores, jerarquía de
+    excepciones, y manejo idiomático de Python que dejan ver que disfrutas
+    programar en éste. ¡Excelente! 😃
+  - No se observa .gitignore para fiunamfs.img
+- Aspectos técnicos destacados ::
+  - Manejo correcto del formato FiUnamFS (superblock, directory entries)
+  - Validación completa de nombres, espacio y duplicados
+  - Separación clara entre modelos, servicios y utils
+
+|------------------------+---------+------+--------|
+| Rubro                  | Parcial | Peso | Puntos |
+|------------------------+---------+------+--------|
+| Proyecto               |         |  0.3 |   3.00 |
+| Cumplimiento           |      10 |      |   1.00 |
+| Claridad de desarrollo |      10 |      |   1.00 |
+| Interfaz usuario       |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Desarrollo             |         |  0.3 |   3.00 |
+| Directorio de proyecto |      10 |      |   1.00 |
+| Código válido          |      10 |      |   1.00 |
+| Comentarios            |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Legibilidad            |         |  0.2 |   2.00 |
+| Estructura             |      10 |      |   1.00 |
+| Nomenclatura           |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+|                        |         |  0.2 |   2.00 |
+| Documentación externa  |      10 |      |   0.67 |
+| Entorno y dependencias |      10 |      |   0.67 |
+| Historia en Git        |      10 |      |   0.67 |
+|------------------------+---------+------+--------|
+| TOTAL                  |         |      |  10.00 |
+|------------------------+---------+------+--------|
+#+TBLFM: @2$4=@3+@4+@5 ; f-2::@3$4=$2*@2$3/3 ; f-2::@4$4=$2*@2$3/3 ; f-2::@5$4=$2*@2$3/3 ; f-2::@6$4=@7+@8+@9 ; f-2::@7$4=$2*@6$3/3 ; f-2::@8$4=$2*@6$3/3 ; f-2::@9$4=$2*@6$3/3 ; f-2::@10$4=@11+@12 ; f-2::@11$4=$2*@10$3/2 ; f-2::@12$4=$2*@10$3/2 ; f-2::@13$4=@14+@15+@16 ; f-2::@14$4=$2*@13$3/3 ; f-2::@15$4=$2*@13$3/3 ; f-2::@16$4=$2*@13$3/3 ; f-2::@17$4=@2+@6+@10+@13 ; f-2
+
+** Hernandez Jorge, Zamora Antonio
+- Documentación :: [[./HernandezJorge-ZamoraAntonio/README.md][README.md]]
+- Programas :: [[./HernandezJorge-ZamoraAntonio/fiunamfs_info.py][fiunamfs_info.py]]
+- Otros archivos ::  [[./HernandezJorge-ZamoraAntonio/fiunamfs.img][fiunamfs.img]], [[./HernandezJorge-ZamoraAntonio/copia_datos1.txt][copia_datos1.txt]], [[./HernandezJorge-ZamoraAntonio/datos1.txt][datos1.txt]], [[./HernandezJorge-ZamoraAntonio/datos2.txt][datos2.txt]], [[./HernandezJorge-ZamoraAntonio/hola.txt][hola.txt]]
+- Concurrencia/sincronización ::
+  - No implementa hilos ni mecanismos de sincronización
+    - Programa completamente secuencial
+    - No cumple con el requisito de concurrencia del proyecto
+- Interfaz ::
+  - Interfaz de línea de comandos básica
+  - Requiere ejecutar modificar el código para cambiar el comportamiento y
+    ejecutar las diferentes operaciones
+    - El contenido de =main()= parece más bien un caso de prueba
+  - Uso no intuitivo que requiere comprender la implementación
+- Comentarios ::
+  - Documentación en README.md completa con explicación de funcionalidades
+  - Código con comentarios mínimos pero funcionales
+  - Explica problemas encontrados y soluciones implementadas
+  - No incluye .gitignore
+    - La ejecución del programa modifica el estado del directorio
+- Aspectos técnicos destacados ::
+  - Funcionalidad de compactación
+
+|------------------------+---------+------+--------|
+| Rubro                  | Parcial | Peso | Puntos |
+|------------------------+---------+------+--------|
+| Proyecto               |         |  0.3 |   1.75 |
+| Cumplimiento           |     5.0 |      |   0.50 |
+| Claridad de desarrollo |     7.5 |      |   0.75 |
+| Interfaz usuario       |     5.0 |      |   0.50 |
+|------------------------+---------+------+--------|
+| Desarrollo             |         |  0.3 |   2.50 |
+| Directorio de proyecto |     7.5 |      |   0.75 |
+| Código válido          |     7.5 |      |   0.75 |
+| Comentarios            |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Legibilidad            |         |  0.2 |   1.75 |
+| Estructura             |     7.5 |      |   0.75 |
+| Nomenclatura           |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Entrega                |         |  0.2 |   1.67 |
+| Documentación externa  |     7.5 |      |   0.50 |
+| Entorno y dependencias |     7.5 |      |   0.50 |
+| Historia en Git        |      10 |      |   0.67 |
+|------------------------+---------+------+--------|
+| TOTAL                  |         |      |   7.67 |
+|------------------------+---------+------+--------|
+#+TBLFM: @2$4=min(10, @3+@4+@5);f2::@3$4=$2 * @2$3/3;f2::@4$4=$2 * @2$3/3;f2::@5$4=$2 * @2$3/3;f2::@6$4=min(10, @7+@8+@9);f2::@7$4=$2 * @6$3/3;f2::@8$4=$2 * @6$3/3;f2::@9$4=$2 * @6$3/3;f2::@10$4=min(10, @11+@12);f2::@11$4=$2 * @10$3/2;f2::@12$4=$2 * @10$3/2;f2::@13$4=min(10.0, @14+@15+@16);f2::@14$4=$2 * @13$3/3;f2::@15$4=$2 * @13$3/3;f2::@16$4=$2 * @13$3/3;f2::@17$4=@2$4+@6$4+@10$4+@13$4;f2
+
+** Luna Diego, Coronado Diego
+- Documentación :: [[./Luna.Diego-Coronado.Diego/Luna.Diego_Coronado_Dieco_Proyecto2.pdf][Luna.Diego_Coronado_Dieco_Proyecto2.pdf]]
+- Programas :: [[./Luna.Diego-Coronado.Diego/Luna.Diego_Coronado.Diego_Proyecto2.py][Luna.Diego_Coronado.Diego_Proyecto2.py]]
+- Concurrencia/sincronización ::
+  - Implementación robusta con patrón de dos hilos (trabajo + animación)
+  - Uso de threading.Lock() para proteger operaciones críticas de archivo
+  - Comunicación entre hilos mediante threading.Event()
+  - Sincronización adecuada que previene condiciones de carrera
+- Interfaz ::
+  - GUI con Tkinter/ttk
+  - =Treeview= con información detallada de archivos
+  - Animaciones en tiempo real no bloqueantes
+  - Navegación intuitiva que no requiere documentación extensa
+- Comentarios ::
+  - Muy buena documentación externa con explicación técnica completa
+  - Código bien comentado, con explicación de funcionalidades clave
+  - Explica estrategia de implementación y decisiones de diseño
+  - Incluye manual de usuario detallado con ejemplos visuales
+- Aspectos técnicos destacados ::
+  - Manejo correcto de formato FiUnamFS con validación estricta
+  - Separación clara en clases (=SistemaArchivosFiUnamFS=, =OperacionesFS=,
+    =FiUnamFS_GUI=)
+  - Validación de nombres y prevención de duplicados
+
+|------------------------+---------+------+--------|
+| Rubro                  | Parcial | Peso | Puntos |
+|------------------------+---------+------+--------|
+| Proyecto               |         |  0.3 |   3.00 |
+| Cumplimiento           |      10 |      |   1.00 |
+| Claridad de desarrollo |      10 |      |   1.00 |
+| Interfaz usuario       |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Desarrollo             |         |  0.3 |   2.75 |
+| Directorio de proyecto |      10 |      |   1.00 |
+| Código válido          |     7.5 |      |   0.75 |
+| Comentarios            |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Legibilidad            |         |  0.2 |   1.88 |
+| Estructura             |      10 |      |   1.00 |
+| Nomenclatura           |     8.8 |      |   0.88 |
+|------------------------+---------+------+--------|
+| Entrega                |         |  0.2 |   2.00 |
+| Documentación externa  |      10 |      |   0.67 |
+| Entorno y dependencias |      10 |      |   0.67 |
+| Historia en Git        |      10 |      |   0.67 |
+|------------------------+---------+------+--------|
+| TOTAL                  |         |      |   9.63 |
+|------------------------+---------+------+--------|
+#+TBLFM: @2$4=min(10, @3+@4+@5);f2::@3$4=$2 * @2$3/3;f2::@4$4=$2 * @2$3/3;f2::@5$4=$2 * @2$3/3;f2::@6$4=min(10, @7+@8+@9);f2::@7$4=$2 * @6$3/3;f2::@8$4=$2 * @6$3/3;f2::@9$4=$2 * @6$3/3;f2::@10$4=min(10, @11+@12);f2::@11$4=$2 * @10$3/2;f2::@12$4=$2 * @10$3/2;f2::@13$4=min(10.0, @14+@15+@16);f2::@14$4=$2 * @13$3/3;f2::@15$4=$2 * @13$3/3;f2::@16$4=$2 * @13$3/3;f2::@17$4=@2$4+@6$4+@10$4+@13$4;f2
+
+** Martínez José
+- Documentación :: [[./MartínezJosé/MartínezJoseProyecto2.pdf][MartínezJoseProyecto2.pdf]]
+- Programas :: [[./MartínezJosé/Proyecto2.py][Proyecto2.py]]
+- Concurrencia/sincronización ::
+  - Implementación básica con locks para proteger operaciones de E/S, hilos
+    para operaciones de copia que evitan bloquear la GUI
+- Interfaz ::
+  - GUI mínimo con Tkinter
+    - Tabla con los archivos presentada a pantalla, aunque no como /objetos
+      funcionales/
+  - Soporte para FUSE
+    - Ni la documentación ni el programa indican cómo elegir el tipo de
+      interfaz; hay que leer el código para comprenderlo
+  - Te doy el punto completo de /interfaz usuario/, por haber implementado
+    FUSE. Pero la usabilidad del GUI... merece más cariño 😉
+- Comentarios ::
+  - Explica funcionalidades principales pero falta profundidad en aspectos
+    técnicos complejos
+  - Tu documentación tampoco menciona que el archivo =fiunamfs.img= debe
+    estar en el directorio desde donde ejecutas.
+- Aspectos técnicos destacados ::
+  - Presenta dos interfaces, una GUI y una FUSE, decidiendo cuál presentar
+    al usuario a partir de los módulos disponibles en la instalación. ¡Muy
+    bien!
+    - Ojo: En caso de tener FUSE instalado y querer usar la versión
+      GUI... Debería haber modo, ¿no? 😉
+    - Tal vez sería mejor presentar la posibilidad de elegir mediante
+      argumentos en línea de comando...?
+
+
+|------------------------+---------+------+--------|
+| Rubro                  | Parcial | Peso | Puntos |
+|------------------------+---------+------+--------|
+| Proyecto               |         |  0.3 |   2.75 |
+| Cumplimiento           |      10 |      |   1.00 |
+| Claridad de desarrollo |     7.5 |      |   0.75 |
+| Interfaz usuario       |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Desarrollo             |         |  0.3 |   2.75 |
+| Directorio de proyecto |     7.5 |      |   0.75 |
+| Código válido          |      10 |      |   1.00 |
+| Comentarios            |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Legibilidad            |         |  0.2 |   2.00 |
+| Estructura             |      10 |      |   1.00 |
+| Nomenclatura           |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Entrega                |         |  0.2 |   1.33 |
+| Documentación externa  |     7.5 |      |   0.50 |
+| Entorno y dependencias |     7.5 |      |   0.50 |
+| Historia en Git        |       5 |      |   0.33 |
+|------------------------+---------+------+--------|
+| TOTAL                  |         |      |   8.83 |
+|------------------------+---------+------+--------|
+
+#+TBLFM: @2$4=min(10, @3+@4+@5);f2::@3$4=$2 * @2$3/3;f2::@4$4=$2 * @2$3/3;f2::@5$4=$2 * @2$3/3;f2::@6$4=min(10, @7+@8+@9);f2::@7$4=$2 * @6$3/3;f2::@8$4=$2 * @6$3/3;f2::@9$4=$2 * @6$3/3;f2::@10$4=min(10, @11+@12);f2::@11$4=$2 * @10$3/2;f2::@12$4=$2 * @10$3/2;f2::@13$4=min(10.0, @14+@15+@16);f2::@14$4=$2 * @13$3/3;f2::@15$4=$2 * @13$3/3;f2::@16$4=$2 * @13$3/3;f2::@17$4=@2$4+@6$4+@10$4+@13$4;f2
+
+** Maya Bruno
+- Documentación :: [[./MayaBruno/DocumentaciónP2.pdf][DocumentaciónP2.pdf]]
+- Programas :: [[./MayaBruno/Proyecto2BMT.py][Proyecto2BMT.py]]
+- Concurrencia/sincronización ::
+  - Implementación robusta con patrón productor-consumer usando colas
+  - Dos hilos claramente definidos (principal/secundario) con comunicación
+    sincronizada y protocolo de comunicación basado en texto. ¡Interesante!
+    😃
+  - Uso de queue.Queue() para transferencia segura de datos entre hilos
+  - Exclusión mutua implícita mediante apertura exclusiva de archivo en hilo secundario
+- Interfaz ::
+  - Menú de consola funcional con opciones numeradas
+  - El programa no verifica la existencia del archivo =fiunamfs.img= (ni
+    permite indicar dónde está) al iniciar. “Atrapa” exitosamente el error,
+    pero resulta sorprendente al usuario:
+    #+begin_src text
+      Selecciona una opcion: 1
+      [Espera] Procesando en hilo secundario...
+      ❌ ERROR: No se encuentra el archivo fiunamfs.img
+    #+end_src
+    - Está correctamente documentado que =fiunamfs.img= debe estar en el
+      directorio actual
+- Comentarios ::
+  - Documentación externa completa en PDF con explicación técnica detallada
+  - Explica estrategia de implementación y decisiones de diseño
+  - La función =hSecundario()= es demasiado larga (150 líneas). Para que tu
+    código sea /legible/ y /comprensible/, intenta que ninguna función
+    exceda las 50 líneas (y eso ya es tirar un poco alto); te sugeriría
+    separar el ciclo de decisión de la funcionalidad específica implementada.
+- Aspectos técnicos destacados ::
+  - Manejo correcto de formato FiUnamFS con validación estricta de superbloque
+  - Implementación de asignación contigua con cálculo de último cluster ocupado
+  - Separación clara entre lógica de sistema de archivos e interfaz de usuario
+  - Procesamiento adecuado de estructuras binarias con struct.pack/unpack
+
+|------------------------+---------+------+--------|
+| Rubro                  | Parcial | Peso | Puntos |
+|------------------------+---------+------+--------|
+| Proyecto               |         |  0.3 |   2.25 |
+| Cumplimiento           |      10 |      |   1.00 |
+| Claridad de desarrollo |     7.5 |      |   0.75 |
+| Interfaz usuario       |     7.5 |      |   0.75 |
+|------------------------+---------+------+--------|
+| Desarrollo             |         |  0.3 |   2.25 |
+| Directorio de proyecto |     7.5 |      |   0.75 |
+| Código válido          |     7.5 |      |   0.75 |
+| Comentarios            |     7.5 |      |   0.75 |
+|------------------------+---------+------+--------|
+| Legibilidad            |         |  0.2 |   1.50 |
+| Estructura             |     7.5 |      |   0.75 |
+| Nomenclatura           |     7.5 |      |   0.75 |
+|------------------------+---------+------+--------|
+| Entrega                |         |  0.2 |   1.84 |
+| Documentación externa  |      10 |      |   0.67 |
+| Entorno y dependencias |     7.5 |      |   0.50 |
+| Historia en Git        |      10 |      |   0.67 |
+|------------------------+---------+------+--------|
+| TOTAL                  |         |      |   7.84 |
+|------------------------+---------+------+--------|
+#+TBLFM: @2$4=min(10, @3+@4+@5);f2::@3$4=$2 * @2$3/3;f2::@4$4=$2 * @2$3/3;f2::@5$4=$2 * @2$3/3;f2::@6$4=min(10, @7+@8+@9);f2::@7$4=$2 * @6$3/3;f2::@8$4=$2 * @6$3/3;f2::@9$4=$2 * @6$3/3;f2::@10$4=min(10, @11+@12);f2::@11$4=$2 * @10$3/2;f2::@12$4=$2 * @10$3/2;f2::@13$4=min(10.0, @14+@15+@16);f2::@14$4=$2 * @13$3/3;f2::@15$4=$2 * @13$3/3;f2::@16$4=$2 * @13$3/3;f2::@17$4=@2$4+@6$4+@10$4+@13$4;f2
+
+** Sierra Mariana, Tapia Andres
+- Documentación :: [[./SierraMariana-TapiaAndres/Documentación_Proyecto_02__SistOp.pdf][Documentación_Proyecto_02__SistOp.pdf]], [[./SierraMariana-TapiaAndres/saludo.jpg][saludo.jpg]]
+- Programas :: [[./SierraMariana-TapiaAndres/fiunamfs.py][fiunamfs.py]]
+- Concurrencia/sincronización ::
+  - Implementación con variable de condición global (VCListFiles) para
+    notificaciones entre hilos
+  - Uso de mutex (threading.Lock) para proteger operaciones críticas sobre
+    el disco
+  - Hilo monitor que espera notificaciones y actualiza la GUI
+    automáticamente
+  - Sincronización adecuada entre el hilo de GUI y el de /backend/
+- Interfaz ::
+  - GUI funcional con Tkinter, incluye tabla con datos del superbloque e
+    información completa de archivos
+  - Panel de información del sistema y botones para todas las operaciones
+    requeridas
+  - No oculta las entradas de directorio marcadas como vacías 🙁
+  - El manejo de diálogos para selección de archivos y directorios podría
+    beneficiarse de un poco de lógica en el código
+    - Por ejemplo, las advertencias cuando el nombre de archivo es
+      demasiado largo, ¿por qué no permitirle al usuario renombrarlo?
+- Comentarios ::
+  - Muy alta similitud estructural con la entrega de Abraham Tejeda
+  - Documentación extensa en código con explicación detallada de cada
+    método
+  - Documentación externa completa en PDF con arquitectura y ejemplos de
+    uso
+  - Explican problemas de versión (26-1 vs 26-2 — ¡perdón! Dedazo mío 😉) y
+    decisiones de implementación
+  - El código mezcla nombres de funciones/variables en inglés y español, y
+    emplea varios nombres no descriptivos
+  - ¡La documentación es muy comprehensiva! 👍
+- Aspectos técnicos destacados ::
+  - Manejo correcto de formato FiUnamFS con validación de superbloque
+  - Validación de nombres ASCII y longitud máxima de 14 caracteres
+  - Lógica de asignación contigua para espacio libre con búsqueda de
+    clusters consecutivos
+  - Separación clara entre backend (FiUnamFS) y frontend (FiUnamFSGUI)
+
+|------------------------+---------+------+--------|
+| Rubro                  | Parcial | Peso | Puntos |
+|------------------------+---------+------+--------|
+| Proyecto               |         |  0.3 |   2.25 |
+| Cumplimiento           |      10 |      |   1.00 |
+| Claridad de desarrollo |       5 |      |   0.50 |
+| Interfaz usuario       |     7.5 |      |   0.75 |
+|------------------------+---------+------+--------|
+| Desarrollo             |         |  0.3 |   2.75 |
+| Directorio de proyecto |     7.5 |      |   0.75 |
+| Código válido          |      10 |      |   1.00 |
+| Comentarios            |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Legibilidad            |         |  0.2 |   1.50 |
+| Estructura             |     7.5 |      |   0.75 |
+| Nomenclatura           |     7.5 |      |   0.75 |
+|------------------------+---------+------+--------|
+|                        |         |  0.2 |   2.01 |
+| Documentación externa  |      10 |      |   0.67 |
+| Entorno y dependencias |      10 |      |   0.67 |
+| Historia en Git        |      10 |      |   0.67 |
+|------------------------+---------+------+--------|
+| TOTAL                  |         |      |   8.51 |
+|------------------------+---------+------+--------|
+#+TBLFM: @2$4=min(10, @3+@4+@5);f2::@3$4=$2 * @2$3/3;f2::@4$4=$2 * @2$3/3;f2::@5$4=$2 * @2$3/3;f2::@6$4=min(10, @7+@8+@9);f2::@7$4=$2 * @6$3/3;f2::@8$4=$2 * @6$3/3;f2::@9$4=$2 * @6$3/3;f2::@10$4=min(10, @11+@12);f2::@11$4=$2 * @10$3/2;f2::@12$4=$2 * @10$3/2;f2::@13$4=min(10.0, @14+@15+@16);f2::@14$4=$2 * @13$3/3;f2::@15$4=$2 * @13$3/3;f2::@16$4=$2 * @13$3/3;f2::@17$4=@2$4+@6$4+@10$4+@13$4;f2
+
+** Tapia Angel
+- Documentación :: [[./TapiaAngel/README.md][README.md]]
+- Programas :: [[./TapiaAngel/Proyecto.py][Proyecto.py]], [[./TapiaAngel/fiunamfs.img][fiunamfs.img]]
+- Concurrencia/sincronización ::
+  - Implementación usando colas (=Queue=)
+    - Protocolo de comunicación entre los dos componentes
+  - Hilo trabajador dedicado procesando trabajos de forma secuencial
+  - Uso de threading.Lock para proteger acceso al mapeo de memoria
+    - Aunque su uso resulta innecesario, dado que es utilizado únicamente
+      dentro de un hilo con procesamiento secuencial
+  - Falta señalización del trabajador de vuelta a la interfaz indicando que
+    terminó con determinada operación:
+    #+begin_src text
+      FiUnamFS> cp out README.org readme.org
+
+      FiUnamFS> Copiando FiUnamFS:'README.org' -> 'readme.org'
+      OK: Archivo extraído.
+    #+end_src
+    - El segundo prompt aparece antes de que se realice la copia (y el
+      usuario no recibe ningún nuevo prompt)
+- Interfaz ::
+  - Interfaz de línea de comandos (CLI) funcional con prompt interactivo
+  - Tabla básica con información esencial de archivos en formato texto
+  - Comandos principales implementados (ls, cp in/out, rm, exit)
+    - Falta claridad en el manejo: Al invocar el comando, presenta la lista
+      de comandos correctamente:
+      #+begin_src text
+	--- Sistema de archivos de FiUnamFS ---
+	Comandos: ls, cp in/out, rm, exit
+
+	FiUnamFS> 
+      #+end_src
+      Pero no presenta suficiente ayuda ante el usuario perdido hasta haber
+      recorrido cierto camino a ciegas:
+      #+begin_src text
+	FiUnamFS> cp saludo.jpg
+	Comando no reconocido: cp
+
+	FiUnamFS> cp 
+	Comando no reconocido: cp
+
+	FiUnamFS> cp out
+	Comando no reconocido: cp
+
+	FiUnamFS> cp out README.org
+	Uso: cp in <local> <remoto>  O  cp out <remoto> <local>
+      #+end_src
+- Comentarios ::
+  - Documentación moderada en código con explicaciones de funcionalidad
+  - README con arquitectura y guía de uso básica, explicando decisiones de
+    diseño
+  - No incluye a =fiunamfs.img= (que será modificado) en un =.gitignore=
+- Aspectos técnicos destacados ::
+  - Validación de duplicados y longitud de nombres
+  - Separación entre interfaz CLI y backend de operaciones
+
+|------------------------+---------+------+--------|
+| Rubro                  | Parcial | Peso | Puntos |
+|------------------------+---------+------+--------|
+| Proyecto               |         |  0.3 |   2.50 |
+| Cumplimiento           |      10 |      |   1.00 |
+| Claridad de desarrollo |     7.5 |      |   0.75 |
+| Interfaz usuario       |     7.5 |      |   0.75 |
+|------------------------+---------+------+--------|
+| Desarrollo             |         |  0.3 |   2.75 |
+| Directorio de proyecto |     7.5 |      |   0.75 |
+| Código válido          |      10 |      |   1.00 |
+| Comentarios            |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Legibilidad            |         |  0.2 |   1.75 |
+| Estructura             |      10 |      |   1.00 |
+| Nomenclatura           |     7.5 |      |   0.75 |
+|------------------------+---------+------+--------|
+|                        |         |  0.2 |   1.50 |
+| Documentación externa  |     7.5 |      |   0.50 |
+| Entorno y dependencias |     7.5 |      |   0.50 |
+| Historia en Git        |     7.5 |      |   0.50 |
+|------------------------+---------+------+--------|
+| TOTAL                  |         |      |   8.50 |
+|------------------------+---------+------+--------|
+#+TBLFM: @2$4=min(10, @3+@4+@5);f2::@3$4=$2 * @2$3/3;f2::@4$4=$2 * @2$3/3;f2::@5$4=$2 * @2$3/3;f2::@6$4=min(10, @7+@8+@9);f2::@7$4=$2 * @6$3/3;f2::@8$4=$2 * @6$3/3;f2::@9$4=$2 * @6$3/3;f2::@10$4=min(10, @11+@12);f2::@11$4=$2 * @10$3/2;f2::@12$4=$2 * @10$3/2;f2::@13$4=min(10.0, @14+@15+@16);f2::@14$4=$2 * @13$3/3;f2::@15$4=$2 * @13$3/3;f2::@16$4=$2 * @13$3/3;f2::@17$4=@2$4+@6$4+@10$4+@13$4;f2
+
+** Tejeda, Abraham
+- Documentación :: [[./Tejeda Abraham/Documentacion Proyecto Micro sistema de archivos multihilos.pdf][Documentacion Proyecto Micro sistema de archivos multihilos.pdf]]
+- Programas :: [[./Tejeda Abraham/PFSO.py][PFSO.py]]
+- Concurrencia/sincronización ::
+  - Implementación con variable de condición global (VCListFiles) para
+    notificaciones entre hilos
+  - Uso de mutex (threading.Lock) para proteger operaciones críticas sobre
+    el disco
+  - Hilo dedicado para actualización de lista que espera notificaciones
+  - Múltiples hilos worker para operaciones de copia/eliminación en
+    paralelo
+- Interfaz ::
+  - GUI funcional con Tkinter que incluye tabla con todas las columnas
+    requeridas
+  - Panel de información del superbloque y botones para todas las
+    operaciones
+  - Manejo de selección múltiple de archivos y diálogos de confirmación
+  - Formateo de fechas para mejor legibilidad — ¡Muy bien! 😃 (tantos que
+    no lo consideraron...)
+- Comentarios ::
+  - Muy alta similtud estructural con la entrega de Mariana Sierra y Andrés
+    Tapia
+  - Documentación extensa en código con docstrings en todos los métodos
+  - Documentación externa completa en PDF, enfocada a detallar la
+    implementación sección por sección, y con ejemplos visuales de
+    ejecución
+  - No incluye información de fechas en comentarios del código
+  - No menciona .gitignore para fiunamfs.img
+- Aspectos técnicos destacados ::
+  - Manejo correcto de formato FiUnamFS con validación estricta de
+    superbloque
+  - Validación de duplicados y longitud de nombres (14 caracteres máximo)
+  - Lógica de asignación contigua para espacio libre con búsqueda de
+    clusters consecutivos
+  - Separación clara entre backend (FiUnamFS) y frontend (FiUnamFSApp)
+
+|------------------------+---------+------+--------|
+| Rubro                  | Parcial | Peso | Puntos |
+|------------------------+---------+------+--------|
+| Proyecto               |         |  0.3 |   2.75 |
+| Cumplimiento           |      10 |      |   1.00 |
+| Claridad de desarrollo |     7.5 |      |   0.75 |
+| Interfaz usuario       |      10 |      |   1.00 |
+|------------------------+---------+------+--------|
+| Desarrollo             |         |  0.3 |   2.50 |
+| Directorio de proyecto |     7.5 |      |   0.75 |
+| Código válido          |      10 |      |   1.00 |
+| Comentarios            |     7.5 |      |   0.75 |
+|------------------------+---------+------+--------|
+| Legibilidad            |         |  0.2 |   1.50 |
+| Estructura             |     7.5 |      |   0.75 |
+| Nomenclatura           |     7.5 |      |   0.75 |
+|------------------------+---------+------+--------|
+|                        |         |  0.2 |   1.50 |
+| Documentación externa  |      10 |      |   0.67 |
+| Entorno y dependencias |     7.5 |      |   0.50 |
+| Historia en Git        |       5 |      |   0.33 |
+|------------------------+---------+------+--------|
+| TOTAL                  |         |      |   8.25 |
+|------------------------+---------+------+--------|
+#+TBLFM: @2$4=min(10, @3+@4+@5);f2::@3$4=$2 * @2$3/3;f2::@4$4=$2 * @2$3/3;f2::@5$4=$2 * @2$3/3;f2::@6$4=min(10, @7+@8+@9);f2::@7$4=$2 * @6$3/3;f2::@8$4=$2 * @6$3/3;f2::@9$4=$2 * @6$3/3;f2::@10$4=min(10, @11+@12);f2::@11$4=$2 * @10$3/2;f2::@12$4=$2 * @10$3/2;f2::@13$4=min(10.0, @14+@15+@16);f2::@14$4=$2 * @13$3/3;f2::@15$4=$2 * @13$3/3;f2::@16$4=$2 * @13$3/3;f2::@17$4=@2$4+@6$4+@10$4+@13$4;f2
