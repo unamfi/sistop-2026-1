@@ -4,7 +4,7 @@
 * OpenMP desde la terminal: Cómo el kernel ejecuta el paralelismo
 
 - Tema presentado por :: Mariana Sierra y Andrés Tapia
-- Calificación global ::
+- Calificación global :: 9.88
 
 |------------------------+------+--------------------+------+---------|
 | Evaluación  compañeros | Peso | Evaluación docente | Peso | *Total* |

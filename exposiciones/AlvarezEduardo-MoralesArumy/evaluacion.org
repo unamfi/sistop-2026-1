@@ -5,7 +5,7 @@
 
 - Tema presentado por :: Eduardo Antonio Álvarez Salgado y Arumy Lizeth
   Morales Castillo
-- Calificación global ::
+- Calificación global :: 8.92
 
 |------------------------+------+--------------------+------+---------|
 | Evaluación  compañeros | Peso | Evaluación docente | Peso | *Total* |
