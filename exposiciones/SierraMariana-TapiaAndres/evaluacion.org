@@ -1,0 +1,71 @@
+#+title: Evaluación de la exposición
+#+author: Gunnar Wolf
+
+* OpenMP desde la terminal: Cómo el kernel ejecuta el paralelismo
+
+- Tema presentado por :: Mariana Sierra y Andrés Tapia
+- Calificación global ::
+
+|------------------------+------+--------------------+------+---------|
+| Evaluación  compañeros | Peso | Evaluación docente | Peso | *Total* |
+|------------------------+------+--------------------+------+---------|
+|                    9.6 |  0.3 |                 10 |  0.7 |    9.88 |
+|------------------------+------+--------------------+------+---------|
+#+TBLFM: @2$5=$1*$2+$3*$4;f-2
+
+* Evaluación grupal
+
+|              | 1 | 2 | 3 | 4 | 5 | Total |
+|--------------+---+---+---+---+---+-------|
+| Originalidad | 0 | 0 | 0 | 1 | 6 |  9.71 |
+| Nivel        | 0 | 0 | 0 | 1 | 6 |  9.71 |
+| Relevancia   | 0 | 0 | 0 | 2 | 5 |  9.43 |
+| Claridad     | 0 | 0 | 0 | 2 | 5 |  9.43 |
+| Presencia    | 0 | 0 | 0 | 1 | 6 |  9.71 |
+|--------------+---+---+---+---+---+-------|
+|              |   |   |   |   |   |  9.60 |
+#+TBLFM: @2$7..@6$7=10 * (0.2*$2 + 0.4*$3 + 0.6*$4 + 0.8*$5 + $6 ) / vsum($2..$6); f-2::@7$7=vmean(@2$7..@6$7); f-2
+
+** Comentarios de los compañeros
+- Tienen buen dominio del tema, se expresan de forma adecuada.
+- Me hubiera gustado que se abarcaran programás mas complicados
+- Ninguno
+
+* Evaluación por parte del docente
+
+| *Aspecto*              | *Peso* | *Evaluación* | *Puntos* |
+|------------------------+--------+--------------+----------|
+| Originalidad del tema  |    0.1 |           10 |       1. |
+| Material desarrollado  |    0.2 |           10 |       2. |
+| Contenido              |    0.2 |           10 |       2. |
+| Fuentes bibliográficas |    0.1 |           10 |       1. |
+| Uso del tiempo         |    0.1 |           10 |       1. |
+| Dominio del tema       |   0.15 |           10 |      1.5 |
+| Presencia              |   0.15 |           10 |      1.5 |
+|------------------------+--------+--------------+----------|
+| *Global*               |        |              |    10.00 |
+#+TBLFM: @<<$4..@>>$4=$2*$3::$4=vsum(@<<..@>>);f-2
+
+** Comentarios
+- ¡Felicidades! ¡Excelente presentación!
+- Me llama la atención que digan que “emplear la biblioteca (de hilos) de
+  POSIX es muy complicada”, si es precisamente lo que vimos en la unidad
+  “Administración de procesos” 😉
+  - Lo complicado, claro, es dividir y volver a unificar /la carga de
+    trabajo/, y los ejemplos que presentan con OpenMP ilustran cómo esta
+    separación/unión (no únicamente de los hilos de ejecución, sino que de
+    los datos con que van a trabajar en memoria) se realiza
+    automáticamente.
+- En el resultado en que mencionan con la comparación de la suma secuencial
+  y paralelizada: Recuerden que OpenMP puede parametrizarse para saber con
+  cuántos hilos paralelos correr (y, si no me equivoco, por default toma el
+  número de núcleos disponibles en la computadora).
+  - Por tanto, puedo asumir que corrieron el ejemplo en una computadora con
+    4 núcleos... ¿Me equivoco?
+  - Probablemente, la ganancia en mi computadora (de 8 núcleos)
+    sería... de aproximadamente 8× 😉
+- En caso de que les interese aplicar OpenMP bajo el lenguaje Python, dados
+  los pasos que se están dando para “liberar” a Python del /Global
+  Interpreter Lock/ (GIL), encontré el siguiente /pre-print/ de un artículo
+  de César Piñeiro y Juan Pichel, sometido para su publicación hace apenas
+  un par de meses: [[https://arxiv.org/pdf/2411.14887v2][OMP4Py: a pure Python implementation of OpenMP]].
