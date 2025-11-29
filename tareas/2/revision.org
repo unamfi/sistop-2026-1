@@ -149,7 +149,7 @@
 ** Luna Diego, Coronado Diego
 - Documentación :: [[./Luna.Diego-Coronado.Diego/Luna.Diego-Coronado.Diego_Tarea2_ComparaciondePlanificadores.pdf][Luna.Diego-Coronado.Diego_Tarea2_ComparaciondePlanificadores.pdf]]
 - Archivos :: [[./Luna.Diego-Coronado.Diego/Luna.Diego-Coronado.Diego_Tarea2_ComparaciondePlanificadores.py][Luna.Diego-Coronado.Diego_Tarea2_ComparaciondePlanificadores.py]]
-- Calificación :: 9
+- Calificación :: 10
   - Tabla de resultados :: ✅ Sí (FCFS, RR1, RR4, SPN)
   - Esquema visual :: ✅ Sí (con colores ANSI)
   - Algoritmo de colas múltiples :: ✅ Sí (FB implementado)
